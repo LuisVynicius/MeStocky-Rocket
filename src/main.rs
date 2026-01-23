@@ -1,20 +1,28 @@
-#[macro_use] extern crate rocket;
+use crate::{configs::config_jwt::valid_token, routes::route_user::{route_login, route_user_create}};
 
-use crate::{configs::get_database, routes::login::route_login};
+#[macro_use] extern crate rocket;
 
 mod routes;
 mod entities;
 mod configs;
+mod services;
 
 #[launch]
 async fn rocket() -> _ {
     rocket::build()
         .manage(
-            get_database().await
+            configs::config_database::get_database().await
         )
         .mount(
             "/", routes![
-                route_login
+                route_login,
+                route_user_create,
+                test
             ]
         )
+}
+
+#[get("/test/<token>")]
+async fn test(token: String) {
+    println!("Token: {}", valid_token(token));
 }

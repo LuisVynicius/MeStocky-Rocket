@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 dotenv = "0.15.0"
-rocket = { version="0.5.1", features=["json"]}
+jsonwebtoken = { version="10.2.0", features=["aws_lc_rs"] }
+rocket = { version="0.5.1", features=["json"] }
 sea-orm = { version="1.1.19", features=["sqlx-mysql", "runtime-tokio-native-tls", "macros"] }
 serde = "1.0.228"
