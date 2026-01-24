@@ -44,10 +44,14 @@ pub async fn route_user_create(
 pub async fn route_user_update(
     database: &State<DatabaseConnection>,
     authentication: Authentication,
-    user_update_dto: Json<UserUpdateDTO>) {
+    user_update_dto: Json<UserUpdateDTO>
+) -> Result<Custom<&'static str>, Status> {
 
     let result = service_user::update_user(database, user_update_dto.0, authentication).await;
 
-    
+    match result {
+        Ok(message) => Ok(Custom(Status::Ok, message)),
+        Err(_) => Err(Status::Forbidden)
+    }
 
 }
