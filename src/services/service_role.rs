@@ -1,23 +1,23 @@
 use sea_orm::{DatabaseConnection, EntityTrait};
 
-use crate::entities::{dtos::role_dtos::RoleCreateViewDTO, tb_role::{self, ActiveModel}};
+use crate::entities::{dtos::role_dtos::{RoleCreateDTO, RoleViewDTO}, tb_role::{self, ActiveModel, Model}};
 
 pub async fn get_all_role(
     database: &DatabaseConnection,
-) -> Vec<RoleCreateViewDTO> {
+) -> Vec<RoleViewDTO> {
 
     let roles = tb_role::Entity::find().all(database).await;
 
     roles.unwrap()
         .into_iter().map(
-            |model| RoleCreateViewDTO::new(model.name)
+            |model| RoleViewDTO::new(model.id, model.name)
         ).collect()
 
 }
 
 pub async fn create_role(
     database: &DatabaseConnection,
-    role_create_dto: RoleCreateViewDTO
+    role_create_dto: RoleCreateDTO
 ) -> Result<&'static str, ()> {
 
     let role = ActiveModel {
@@ -31,6 +31,19 @@ pub async fn create_role(
         Ok(_) => Ok("Cargo criado com sucesso"),
         Err(_) => Err(())
     }
+}
+
+pub async fn find_role_by_id(
+    database: &DatabaseConnection,
+    id: u64
+) -> Option<Model> {
+
+    let role = tb_role::Entity::find_by_id(id)
+        .one(database)
+        .await;
+
+    role.unwrap_or(None)
+
 }
 
 pub async fn exists_role_by_id(

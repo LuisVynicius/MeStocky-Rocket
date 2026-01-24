@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
-pub struct RoleCreateViewDTO {
+pub struct RoleCreateDTO {
     name: String
 }
 
-impl RoleCreateViewDTO {
+impl RoleCreateDTO {
 
     pub fn new(name: String) -> Self {
         
@@ -17,6 +17,25 @@ impl RoleCreateViewDTO {
 
     pub fn get_name(&self) -> &String {
         &self.name
+    }
+
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct RoleViewDTO {
+    id: u64,
+    name: String
+}
+
+impl RoleViewDTO {
+
+    pub fn new(id: u64, name: String) -> Self {
+        
+        Self {
+            id,
+            name
+        }
+
     }
 
 }

@@ -1,6 +1,34 @@
-use sea_orm::{ActiveModelBehavior, ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect};
+use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 
-use crate::{configs::config_jwt::{get_email_by_token, valid_token}, entities::{dtos::user_dtos::{UserCreateDTO, UserRoleUpdateDTO, UserUpdateDTO}, tb_user::{self, ActiveModel, Model}}, guards::guard_user::Authentication, services::service_role::exists_role_by_id};
+use crate::{configs::config_jwt::{get_email_by_token, valid_token}, entities::{dtos::user_dtos::{UserCreateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO, UserUpdateDTO}, tb_user::{self, ActiveModel, Model}}, guards::guard_user::Authentication, services::service_role::{self, exists_role_by_id}};
+
+pub async fn get_all_users(
+    database: &DatabaseConnection
+) -> Vec<UserSummaryForAdminDTO> {
+
+    let users = tb_user::Entity::find().all(database).await;
+
+    let users = {
+   
+        let mut  vec = Vec::new();
+
+        for model in users.unwrap() {
+
+            let role = service_role::find_role_by_id(database, model.role_id).await.unwrap();
+
+            vec.push(
+                UserSummaryForAdminDTO::new(model.username, model.email, role.name)
+            );
+
+        }
+
+        vec
+   
+    };
+
+    return users;
+
+}
 
 pub async fn create_user(
     database: &DatabaseConnection,

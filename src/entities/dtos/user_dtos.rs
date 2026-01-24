@@ -1,6 +1,25 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
+pub struct UserSummaryForAdminDTO {
+    username: String,
+    email: String,
+    role: String
+}
+
+impl UserSummaryForAdminDTO {
+
+    pub fn new(username: String, email: String, role: String) -> Self {
+        Self {
+            username,
+            email,
+            role
+        }
+    }
+
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct UserCreateDTO {
     username: String,
     password: String,

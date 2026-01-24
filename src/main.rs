@@ -1,4 +1,4 @@
-use crate::{configs::config_jwt::valid_token, routes::{route_role::{route_role_create, route_role_get_all}, route_user::{route_login, route_user_create, route_user_role_update, route_user_update}}};
+use crate::{configs::config_jwt::valid_token, routes::{route_role::{route_role_create, route_role_get_all}, route_user::{route_login, route_user_create, route_user_get_all, route_user_role_update, route_user_update}}};
 
 #[macro_use] extern crate rocket;
 
@@ -17,6 +17,7 @@ async fn rocket() -> _ {
         .mount(
             "/", routes![
                 route_login,
+                route_user_get_all,
                 route_user_create,
                 route_user_update,
                 route_user_role_update,

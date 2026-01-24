@@ -1,7 +1,19 @@
 use rocket::{State, http::Status, response::status::{self, Custom}, serde::json::Json};
 use sea_orm::DatabaseConnection;
 
-use crate::{configs::config_jwt::generate_token, entities::dtos::user_dtos::{LoginDTO, UserCreateDTO, UserRoleUpdateDTO, UserUpdateDTO}, guards::guard_user::Authentication, services::service_user::{self, find_user_by_email}};
+use crate::{configs::config_jwt::generate_token, entities::dtos::user_dtos::{LoginDTO, UserCreateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO, UserUpdateDTO}, guards::guard_user::Authentication, services::service_user::{self, find_user_by_email}};
+
+#[get("/user")]
+pub async fn route_user_get_all(
+    database: &State<DatabaseConnection>,
+    authentication: Authentication
+) -> Json<Vec<UserSummaryForAdminDTO>> {
+
+    let users = service_user::get_all_users(database).await;
+
+    Json(users)
+
+}
 
 #[post("/login", data="<login_dto>")]
 pub async fn route_login(
