@@ -1,4 +1,4 @@
-use sea_orm::{ActiveModelBehavior, DatabaseConnection, EntityTrait};
+use sea_orm::{DatabaseConnection, EntityTrait};
 
 use crate::entities::{dtos::role_dtos::RoleCreateViewDTO, tb_role::{self, ActiveModel}};
 
@@ -31,4 +31,20 @@ pub async fn create_role(
         Ok(_) => Ok("Cargo criado com sucesso"),
         Err(_) => Err(())
     }
+}
+
+pub async fn exists_role_by_id(
+    database: &DatabaseConnection,
+    id: u64
+) -> bool {
+    
+    let result = tb_role::Entity::find_by_id(id)
+        .one(database)
+        .await;
+
+    match result {
+        Ok(model) => model.is_some(),
+        Err(_) => false
+    }
+
 }

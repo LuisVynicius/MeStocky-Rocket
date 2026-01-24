@@ -34,6 +34,18 @@ pub struct UserRoleUpdateDTO {
     role_id: u64
 }
 
+impl UserRoleUpdateDTO {
+    
+    pub fn get_user_id(&self) -> &u64 {
+        &self.user_id
+    }
+
+    pub fn get_role_id(&self) -> &u64 {
+        &self.role_id
+    }
+
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct UserUpdateDTO {
     username: Option<String>,

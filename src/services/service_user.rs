@@ -1,6 +1,6 @@
-use sea_orm::{ActiveModelBehavior, ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use sea_orm::{ActiveModelBehavior, ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect};
 
-use crate::{configs::config_jwt::{get_email_by_token, valid_token}, entities::{dtos::user_dtos::{UserCreateDTO, UserRoleUpdateDTO, UserUpdateDTO}, tb_user::{self, ActiveModel, Model}}, guards::guard_user::Authentication};
+use crate::{configs::config_jwt::{get_email_by_token, valid_token}, entities::{dtos::user_dtos::{UserCreateDTO, UserRoleUpdateDTO, UserUpdateDTO}, tb_user::{self, ActiveModel, Model}}, guards::guard_user::Authentication, services::service_role::exists_role_by_id};
 
 pub async fn create_user(
     database: &DatabaseConnection,
@@ -49,17 +49,18 @@ pub async fn update_user(
     match logged_user {
         Some(model) => {
 
-            let mut update_user = ActiveModel::new();
-
-            update_user.id = ActiveValue::Set(model.id);
-            
-            if let Some(username) = user_update_dto.get_username() {
-                update_user.username = ActiveValue::Set(username.clone());
-            }
-
-            if let Some(email) = user_update_dto.get_email() {
-                update_user.email = ActiveValue::Set(email.clone());
-            }
+            let update_user = ActiveModel {
+                id: ActiveValue::Set(model.id),
+                email: match user_update_dto.get_email() {
+                    Some(email) => ActiveValue::Set(email.clone()),
+                    None => ActiveValue::default()
+                },
+                username: match user_update_dto.get_username() {
+                    Some(username) => ActiveValue::Set(username.clone()),
+                    None => ActiveValue::default()
+                },
+                ..Default::default()
+            };
 
             match tb_user::Entity::update(update_user).exec(database).await {
                 Ok(_) =>return Ok("Usuário atualizado com sucesso"),
@@ -76,9 +77,30 @@ pub async fn switch_role(
     database: &DatabaseConnection,
     user_role_update_dto: UserRoleUpdateDTO,
     authentication: Authentication
-) {
+) -> Result<&'static str, ()> {
 
-    
+    if 
+        !exists_user_by_id(database, *user_role_update_dto.get_user_id()).await ||
+        !exists_role_by_id(database, *user_role_update_dto.get_role_id()).await
+
+    {
+        return Err(());
+    }
+
+    let user = ActiveModel {
+        id: ActiveValue::Set(*user_role_update_dto.get_user_id()),
+        role_id: ActiveValue::Set(*user_role_update_dto.get_role_id()),
+        ..Default::default()
+    };
+
+    let result = tb_user::Entity::update(user).exec(database).await;
+
+    match result {
+
+        Ok(_) => Ok("Cargo do usuário atualizado com sucesso"),
+        Err(_) => Err(())
+
+    }
 
 }
 
@@ -92,5 +114,34 @@ pub async fn find_user_by_email(
         .one(database).await;
 
     user.unwrap_or(None)
+
+}
+
+pub async fn find_user_by_id(
+    database: &DatabaseConnection,
+    id: u64
+) -> Option<Model> {
+
+    let user = tb_user::Entity::find_by_id(id)
+        .one(database)
+        .await;
+
+    user.unwrap_or(None)
+
+}
+
+pub async fn exists_user_by_id(
+    database: &DatabaseConnection,
+    id: u64
+) -> bool {
+    
+    let result = tb_user::Entity::find_by_id(id)
+        .one(database)
+        .await;
+
+    match result {
+        Ok(model) => model.is_some(),
+        Err(_) => false
+    }
 
 }

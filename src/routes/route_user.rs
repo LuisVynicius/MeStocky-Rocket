@@ -1,7 +1,7 @@
 use rocket::{State, http::Status, response::status::{self, Custom}, serde::json::Json};
 use sea_orm::DatabaseConnection;
 
-use crate::{configs::config_jwt::generate_token, entities::dtos::user_dtos::{LoginDTO, UserCreateDTO, UserUpdateDTO}, guards::guard_user::Authentication, services::service_user::{self, find_user_by_email}};
+use crate::{configs::config_jwt::generate_token, entities::dtos::user_dtos::{LoginDTO, UserCreateDTO, UserRoleUpdateDTO, UserUpdateDTO}, guards::guard_user::Authentication, services::service_user::{self, find_user_by_email}};
 
 #[post("/login", data="<login_dto>")]
 pub async fn route_login(
@@ -48,6 +48,22 @@ pub async fn route_user_update(
 ) -> Result<Custom<&'static str>, Status> {
 
     let result = service_user::update_user(database, user_update_dto.0, authentication).await;
+
+    match result {
+        Ok(message) => Ok(Custom(Status::Ok, message)),
+        Err(_) => Err(Status::Forbidden)
+    }
+
+}
+
+#[put("/user/role", data="<user_role_update_dto>")]
+pub async fn route_user_role_update(
+    database: &State<DatabaseConnection>,
+    authentication: Authentication,
+    user_role_update_dto: Json<UserRoleUpdateDTO>
+) -> Result<Custom<&'static str>, Status> {
+
+    let result = service_user::switch_role(database, user_role_update_dto.0, authentication).await;
 
     match result {
         Ok(message) => Ok(Custom(Status::Ok, message)),
