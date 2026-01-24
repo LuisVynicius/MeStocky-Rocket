@@ -3,28 +3,33 @@ use sea_orm::DatabaseConnection;
 
 use crate::{configs::config_jwt::generate_token, entities::dtos::user_dtos::{LoginDTO, UserCreateDTO}, services::service_user::{self, find_user_by_email}};
 
-#[post("/login", data="<logindto>")]
-pub async fn route_login(database: &State<DatabaseConnection>, logindto: Json<LoginDTO>) -> Result<status::Custom<String>, Status> {
+#[post("/login", data="<login_dto>")]
+pub async fn route_login(database: &State<DatabaseConnection>, login_dto: Json<LoginDTO>) -> Result<status::Custom<String>, Status> {
     
-    let user = find_user_by_email(database, logindto.get_email().clone()).await;
+    let user = find_user_by_email(database, login_dto.get_email().clone()).await;
 
     match user {
-        Ok(user) => {
-            if user.1.password.eq(logindto.get_password()) {
-                let token = generate_token(user.1.email.clone());
+        Some(user) => {
+            if user.password.eq(login_dto.get_password()) {
+                let token = generate_token(user.email.clone());
 
                 return Ok(Custom(Status::Ok, token.unwrap()));
             }
             Err(Status::InternalServerError)
         },
-        Err(status) => Err(status)
+        None => Err(Status::NotFound)
     }
 
 }
 
-#[post("/user", data="<user_dto>")]
-pub async fn route_user_create(database: &State<DatabaseConnection>, user_dto: Json<UserCreateDTO>) {
-    
-    service_user::create_user(database, user_dto.0).await;
+#[post("/user", data="<user_create_dto>")]
+pub async fn route_user_create(database: &State<DatabaseConnection>, user_create_dto: Json<UserCreateDTO>) -> Result<Custom<&'static str>, Status> {
+
+    let result = service_user::create_user(database, user_create_dto.0).await;
+
+    match result {
+        Ok(message) => Ok(Custom(Status::Created, message)),
+        Err(_) => Err(Status::Conflict)
+    }
 
 }
