@@ -1,6 +1,6 @@
 use sea_orm::{ActiveModelBehavior, ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 
-use crate::{configs::config_jwt::{get_email_by_token, valid_token}, entities::{dtos::user_dtos::{UserCreateDTO, UserUpdateDTO}, tb_user::{self, ActiveModel, Model}}, guards::guard_user::Authentication};
+use crate::{configs::config_jwt::{get_email_by_token, valid_token}, entities::{dtos::user_dtos::{UserCreateDTO, UserRoleUpdateDTO, UserUpdateDTO}, tb_user::{self, ActiveModel, Model}}, guards::guard_user::Authentication};
 
 pub async fn create_user(
     database: &DatabaseConnection,
@@ -69,6 +69,16 @@ pub async fn update_user(
         },
         None => return Err(())
     }
+
+}
+
+pub async fn switch_role(
+    database: &DatabaseConnection,
+    user_role_update_dto: UserRoleUpdateDTO,
+    authentication: Authentication
+) {
+
+    
 
 }
 

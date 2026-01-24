@@ -29,6 +29,12 @@ impl UserCreateDTO {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct UserRoleUpdateDTO {
+    user_id: u64,
+    role_id: u64
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct UserUpdateDTO {
     username: Option<String>,
     email: Option<String>,
