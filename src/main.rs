@@ -1,4 +1,4 @@
-use crate::{configs::config_jwt::valid_token, routes::route_user::{route_login, route_user_create}};
+use crate::{configs::config_jwt::valid_token, routes::route_user::{route_login, route_user_create, route_user_update}};
 
 #[macro_use] extern crate rocket;
 
@@ -6,6 +6,7 @@ mod routes;
 mod entities;
 mod configs;
 mod services;
+mod guards;
 
 #[launch]
 async fn rocket() -> _ {
@@ -17,6 +18,7 @@ async fn rocket() -> _ {
             "/", routes![
                 route_login,
                 route_user_create,
+                route_user_update,
                 test
             ]
         )

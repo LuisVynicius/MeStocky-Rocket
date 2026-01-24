@@ -1,10 +1,13 @@
 use rocket::{State, http::Status, response::status::{self, Custom}, serde::json::Json};
 use sea_orm::DatabaseConnection;
 
-use crate::{configs::config_jwt::generate_token, entities::dtos::user_dtos::{LoginDTO, UserCreateDTO}, services::service_user::{self, find_user_by_email}};
+use crate::{configs::config_jwt::generate_token, entities::dtos::user_dtos::{LoginDTO, UserCreateDTO, UserUpdateDTO}, guards::guard_user::Authentication, services::service_user::{self, find_user_by_email}};
 
 #[post("/login", data="<login_dto>")]
-pub async fn route_login(database: &State<DatabaseConnection>, login_dto: Json<LoginDTO>) -> Result<status::Custom<String>, Status> {
+pub async fn route_login(
+    database: &State<DatabaseConnection>,
+    login_dto: Json<LoginDTO>
+) -> Result<status::Custom<String>, Status> {
     
     let user = find_user_by_email(database, login_dto.get_email().clone()).await;
 
@@ -23,7 +26,10 @@ pub async fn route_login(database: &State<DatabaseConnection>, login_dto: Json<L
 }
 
 #[post("/user", data="<user_create_dto>")]
-pub async fn route_user_create(database: &State<DatabaseConnection>, user_create_dto: Json<UserCreateDTO>) -> Result<Custom<&'static str>, Status> {
+pub async fn route_user_create(
+    database: &State<DatabaseConnection>,
+    user_create_dto: Json<UserCreateDTO>
+) -> Result<Custom<&'static str>, Status> {
 
     let result = service_user::create_user(database, user_create_dto.0).await;
 
@@ -31,5 +37,17 @@ pub async fn route_user_create(database: &State<DatabaseConnection>, user_create
         Ok(message) => Ok(Custom(Status::Created, message)),
         Err(_) => Err(Status::Conflict)
     }
+
+}
+
+#[put("/user", data="<user_update_dto>")]
+pub async fn route_user_update(
+    database: &State<DatabaseConnection>,
+    authentication: Authentication,
+    user_update_dto: Json<UserUpdateDTO>) {
+
+    let result = service_user::update_user(database, user_update_dto.0, authentication).await;
+
+    
 
 }

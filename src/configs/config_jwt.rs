@@ -35,16 +35,28 @@ pub fn valid_token(token: String) -> bool {
 
     let jwt_secret = get_jwt_secret();
     
-    println!("token: {token}");
     let claim = decode::<Claim>(
         token,
         &DecodingKey::from_secret(jwt_secret.as_bytes()),
         &Validation::default()
     );
 
-    println!("Estou passando aqui");
-
     claim.is_ok()
+    
+}
+
+pub fn get_email_by_token(token: String) -> String {
+
+    let jwt_secret = get_jwt_secret();
+    
+    let claim = decode::<Claim>(
+        token,
+        &DecodingKey::from_secret(jwt_secret.as_bytes()),
+        &Validation::default()
+    );
+
+    claim.unwrap().claims.sub
+
 }
 
 #[derive(Debug, Serialize, Deserialize)]
