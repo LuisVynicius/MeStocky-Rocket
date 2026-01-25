@@ -2,7 +2,7 @@
 
 pub use super::tb_category::Entity as TbCategory;
 pub use super::tb_product::Entity as TbProduct;
-pub use super::tb_refund_reasons::Entity as TbRefundReasons;
 pub use super::tb_report::Entity as TbReport;
+pub use super::tb_return_reason::Entity as TbReturnReason;
 pub use super::tb_role::Entity as TbRole;
 pub use super::tb_user::Entity as TbUser;

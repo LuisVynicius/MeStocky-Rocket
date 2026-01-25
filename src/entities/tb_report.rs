@@ -9,7 +9,7 @@ pub struct Model {
     pub id: u64,
     pub date: DateTime,
     pub quantity: u64,
-    pub refund_reason_id: u64,
+    pub reason_id: u64,
     pub product_id: u64,
 }
 
@@ -24,13 +24,13 @@ pub enum Relation {
     )]
     TbProduct,
     #[sea_orm(
-        belongs_to = "super::tb_refund_reasons::Entity",
-        from = "Column::RefundReasonId",
-        to = "super::tb_refund_reasons::Column::Id",
+        belongs_to = "super::tb_return_reason::Entity",
+        from = "Column::ReasonId",
+        to = "super::tb_return_reason::Column::Id",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    TbRefundReasons,
+    TbReturnReason,
 }
 
 impl Related<super::tb_product::Entity> for Entity {
@@ -39,9 +39,9 @@ impl Related<super::tb_product::Entity> for Entity {
     }
 }
 
-impl Related<super::tb_refund_reasons::Entity> for Entity {
+impl Related<super::tb_return_reason::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TbRefundReasons.def()
+        Relation::TbReturnReason.def()
     }
 }
 
