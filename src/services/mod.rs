@@ -2,3 +2,4 @@ pub mod service_user;
 pub mod service_role;
 pub mod service_category;
 pub mod service_product;
+pub mod service_return_reason;
