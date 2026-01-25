@@ -9,10 +9,8 @@ pub struct Model {
     pub id: u64,
     #[sea_orm(unique)]
     pub name: String,
-    #[sea_orm(column_type = "custom(\"MEDIUMINT UNSIGNED\")")]
-    pub quantity: String,
-    #[sea_orm(column_type = "custom(\"MEDIUMINT UNSIGNED\")")]
-    pub min_quantity: String,
+    pub quantity: u64,
+    pub min_quantity: u64,
     pub category_id: u64,
 }
 

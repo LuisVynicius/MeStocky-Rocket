@@ -8,8 +8,7 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub id: u64,
     pub date: DateTime,
-    #[sea_orm(column_type = "custom(\"MEDIUMINT UNSIGNED\")")]
-    pub quantity: String,
+    pub quantity: u64,
     pub refund_reason_id: u64,
     pub product_id: u64,
 }
