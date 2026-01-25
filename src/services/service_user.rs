@@ -75,6 +75,7 @@ pub async fn update_user(
     let logged_user = find_user_by_email(database, email).await;
 
     match logged_user {
+
         Some(model) => {
 
             let update_user = ActiveModel {
@@ -97,6 +98,7 @@ pub async fn update_user(
 
         },
         None => return Err(())
+
     }
 
 }

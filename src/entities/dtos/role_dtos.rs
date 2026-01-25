@@ -22,12 +22,12 @@ impl RoleCreateDTO {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct RoleViewDTO {
+pub struct RoleDTO {
     id: u64,
     name: String
 }
 
-impl RoleViewDTO {
+impl RoleDTO {
 
     pub fn new(id: u64, name: String) -> Self {
         
@@ -37,5 +37,12 @@ impl RoleViewDTO {
         }
 
     }
+
+    pub fn get_id(&self) -> &u64 {
+        &self.id
+    }
+
+    pub fn get_name(&self) -> &String {
+        &self.name    }
 
 }
