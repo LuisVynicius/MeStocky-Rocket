@@ -2,7 +2,7 @@ use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFi
 
 use crate::entities::{dtos::role_dtos::{RoleCreateDTO, RoleDTO}, tb_role::{self, ActiveModel, Model}};
 
-pub async fn get_all_role(
+pub async fn get_all_roles(
     database: &DatabaseConnection,
 ) -> Vec<RoleDTO> {
 
@@ -39,6 +39,10 @@ pub async fn update_role(
 ) -> Result<&'static str, ()> {
 
     if !exists_role_by_id(database, *role_update_dto.get_id()).await {
+        return Err(());
+    }
+
+    if exists_role_by_name(database, role_update_dto.get_name().clone()).await {
         return Err(());
     }
 

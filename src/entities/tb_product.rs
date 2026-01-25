@@ -13,14 +13,14 @@ pub struct Model {
     pub quantity: String,
     #[sea_orm(column_type = "custom(\"MEDIUMINT UNSIGNED\")")]
     pub min_quantity: String,
-    pub product_id: u64,
+    pub category_id: u64,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
         belongs_to = "super::tb_category::Entity",
-        from = "Column::ProductId",
+        from = "Column::CategoryId",
         to = "super::tb_category::Column::Id",
         on_update = "NoAction",
         on_delete = "NoAction"

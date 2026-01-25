@@ -106,7 +106,7 @@ pub async fn update_user(
 pub async fn switch_role(
     database: &DatabaseConnection,
     user_role_update_dto: UserRoleUpdateDTO,
-    authentication: Authentication
+    _authentication: Authentication
 ) -> Result<&'static str, ()> {
 
     if 

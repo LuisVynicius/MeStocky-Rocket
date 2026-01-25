@@ -9,7 +9,7 @@ pub async fn route_role_get_all(
     _authentication: Authentication
 ) -> Json<Vec<RoleDTO>> {
 
-    let roles = service_role::get_all_role(database).await;
+    let roles = service_role::get_all_roles(database).await;
 
     Json(roles)
 

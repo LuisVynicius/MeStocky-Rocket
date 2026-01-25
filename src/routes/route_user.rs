@@ -6,7 +6,7 @@ use crate::{configs::config_jwt::generate_token, entities::dtos::user_dtos::{Log
 #[get("/user")]
 pub async fn route_user_get_all(
     database: &State<DatabaseConnection>,
-    authentication: Authentication
+    _authentication: Authentication
 ) -> Json<Vec<UserSummaryForAdminDTO>> {
 
     let users = service_user::get_all_users(database).await;
