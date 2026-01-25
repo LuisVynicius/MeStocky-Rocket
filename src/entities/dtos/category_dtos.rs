@@ -15,6 +15,14 @@ impl CategoryDTO {
         }
     }
 
+    pub fn get_id(&self) -> &u64 {
+        &self.id
+    }
+
+    pub fn get_name(&self) -> &String {
+        &self.name
+    }
+
 }
 
 
