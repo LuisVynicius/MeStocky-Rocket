@@ -1,6 +1,6 @@
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 
-use crate::{entities::{dtos::product_dtos::{ProductCreateDTO, ProductDTO, ProductViewDTO}, tb_product::{self, ActiveModel}}, services::service_category};
+use crate::{entities::{dtos::product_dtos::{ProductChangeQuantityDTO, ProductCreateDTO, ProductDTO, ProductViewDTO}, tb_product::{self, ActiveModel, Model}}, services::service_category};
 
 pub async fn get_all_products(
     database: &DatabaseConnection,
@@ -85,6 +85,73 @@ pub async fn update_product(
         Err(_) => Err(())
 
     }
+
+}
+
+pub async fn change_quantity(
+    database: &DatabaseConnection,
+    product_change_quantity_dto: ProductChangeQuantityDTO
+) -> Result<&'static str, ()> {
+
+    if !exists_product_by_id(database, *product_change_quantity_dto.get_id()).await {
+
+        return Err(());
+
+    }
+
+    let product = find_product_by_id(database, *product_change_quantity_dto.get_id()).await;
+
+    match product {
+
+        Some(product) => {
+            let mut updated_product = ActiveModel::default();
+
+            updated_product.id = ActiveValue::Set(product.id);
+
+            let result;
+
+            match *product_change_quantity_dto.get_change_type() {
+
+                false => {
+                    if product.quantity < *product_change_quantity_dto.get_quantity() {
+                        return Err(());
+                    }
+                    
+                    updated_product.quantity = ActiveValue::Set(product.quantity - product_change_quantity_dto.get_quantity());
+
+                    result = tb_product::Entity::update(updated_product).exec(database).await;
+                },
+                true => {
+                    updated_product.quantity = ActiveValue::Set(product.quantity + product_change_quantity_dto.get_quantity());
+
+                    result = tb_product::Entity::update(updated_product).exec(database).await;
+                }
+
+            }
+
+            match result {
+
+                Ok(_) => Ok("Quantidade alterada com sucesso"),
+                Err(_) => Err(())
+
+            }
+        },
+        None => Err(())
+
+    }
+
+}
+
+pub async fn find_product_by_id(
+    database: &DatabaseConnection,
+    id: u64
+) -> Option<Model> {
+
+    let product = tb_product::Entity::find_by_id(id)
+        .one(database)
+        .await;
+
+    product.unwrap_or(None)
 
 }
 

@@ -11,24 +11,6 @@ pub struct ProductDTO {
 
 impl ProductDTO {
 
-    pub fn new(
-        id: u64,
-        name: String,
-        quantity: u64,
-        min_quantity: u64,
-        category_id: u64
-    ) -> Self {
-
-        Self {
-            id,
-            name,
-            quantity,
-            min_quantity,
-            category_id
-        }
-
-    }
-
     pub fn get_id(&self) -> &u64 {
 
         &self.id
@@ -123,6 +105,35 @@ impl ProductViewDTO {
             min_quantity,
             category
         }
+
+    }
+
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ProductChangeQuantityDTO {
+    id: u64,
+    change_type: bool,
+    quantity: u64
+}
+
+impl ProductChangeQuantityDTO {
+
+    pub fn get_id(&self) -> &u64 {
+
+        &self.id
+
+    }
+
+    pub fn get_change_type(&self) -> &bool {
+
+        &self.change_type
+
+    }
+
+    pub fn get_quantity(&self) -> &u64 {
+
+        &self.quantity
 
     }
 

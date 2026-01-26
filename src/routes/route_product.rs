@@ -1,7 +1,7 @@
 use rocket::{State, http::Status, response::status::Custom, serde::json::Json};
 use sea_orm::DatabaseConnection;
 
-use crate::{entities::dtos::product_dtos::{ProductCreateDTO, ProductDTO, ProductViewDTO}, guards::guard_user::Authentication, services::service_product};
+use crate::{entities::dtos::product_dtos::{ProductChangeQuantityDTO, ProductCreateDTO, ProductDTO, ProductViewDTO}, guards::guard_user::Authentication, services::service_product};
 
 #[get("/product")]
 pub async fn route_product_get_all(
@@ -39,6 +39,23 @@ pub async fn route_product_update(
 ) -> Result<Custom<&'static str>, Status> {
 
     let result = service_product::update_product(database, product_update_dto.0).await;
+
+    match result {
+
+        Ok(message) => Ok(Custom(Status::Ok, message)),
+        Err(_) => Err(Status::Conflict)
+
+    }
+
+}
+
+#[put("/product/quantity", data="<product_change_quantity_dto>")]
+pub async fn route_product_quantity_update(
+    database: &State<DatabaseConnection>,
+    product_change_quantity_dto: Json<ProductChangeQuantityDTO>
+) -> Result<Custom<&'static str>, Status> {
+
+    let result = service_product::change_quantity(database, product_change_quantity_dto.0).await;
 
     match result {
 
