@@ -1,12 +1,12 @@
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 
-use crate::{configs::{config_bcrypt::{encrypt_password, verify_password}, config_jwt::{generate_token, get_email_by_token, valid_token}}, entities::{dtos::user_dtos::{LoginDTO, UserCreateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO, UserUpdateDTO}, tb_user::{self, ActiveModel, Model}}, guards::guard_user::Authentication, services::service_role::{self, exists_role_by_id}};
+use crate::{configs::{config_bcrypt::{encrypt_password, verify_password}, config_jwt::{generate_token, get_email_by_token, valid_token}}, entities::{dtos::user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserCredentialsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO}, tb_user::{self, ActiveModel, Model}}, guards::guard_user::Authentication, services::service_role::{self, exists_role_by_id}};
 
 pub async fn login(
     database: &DatabaseConnection,
     login_dto: LoginDTO
-) -> Result<String, ()> {
-
+) -> Result<AuthenticationDTO, ()> {
+    
     let user = find_user_by_email(database, login_dto.get_email().clone()).await;
 
     match user {
@@ -15,7 +15,7 @@ pub async fn login(
             if verify_password(login_dto.get_password(), &user.password) {
                 let token = generate_token(user.email.clone());
 
-                return Ok(token.unwrap());
+                return Ok(AuthenticationDTO::new(token.unwrap()));
             }
             Err(())
         },
@@ -40,7 +40,7 @@ pub async fn get_all_users(
             let role = service_role::find_role_by_id(database, model.role_id).await.unwrap();
 
             vec.push(
-                UserSummaryForAdminDTO::new(model.username, model.email, role.name)
+                UserSummaryForAdminDTO::new(model.id, model.username, model.email, role.name)
             );
 
         }
@@ -85,7 +85,7 @@ pub async fn create_user(
 
 pub async fn update_user(
     database: &DatabaseConnection,
-    user_update_dto: UserUpdateDTO,
+    user_update_dto: UserCredentialsUpdateDTO,
     authentication: Authentication
 ) -> Result<&'static str, ()> {
 

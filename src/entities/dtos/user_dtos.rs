@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct UserSummaryForAdminDTO {
+    id: u64,
     username: String,
     email: String,
     role: String
@@ -9,8 +10,9 @@ pub struct UserSummaryForAdminDTO {
 
 impl UserSummaryForAdminDTO {
 
-    pub fn new(username: String, email: String, role: String) -> Self {
+    pub fn new(id: u64, username: String, email: String, role: String) -> Self {
         Self {
+            id,
             username,
             email,
             role
@@ -66,12 +68,12 @@ impl UserRoleUpdateDTO {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct UserUpdateDTO {
+pub struct UserCredentialsUpdateDTO {
     username: Option<String>,
     email: Option<String>,
 }
 
-impl UserUpdateDTO {
+impl UserCredentialsUpdateDTO {
     
     pub fn get_username(&self) -> &Option<String> {
         &self.username
@@ -99,4 +101,27 @@ impl LoginDTO {
         &self.password
     }
     
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct AuthenticationDTO {
+    token: String
+}
+
+impl AuthenticationDTO {
+
+    pub fn new(token: String) -> Self {
+
+        Self {
+            token
+        }
+
+    }
+
+    pub fn set_token(&mut self, token: String) {
+
+        self.token = token;
+
+    }
+
 }
