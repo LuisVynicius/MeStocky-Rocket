@@ -1,6 +1,29 @@
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 
-use crate::{configs::config_jwt::{get_email_by_token, valid_token}, entities::{dtos::user_dtos::{UserCreateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO, UserUpdateDTO}, tb_user::{self, ActiveModel, Model}}, guards::guard_user::Authentication, services::service_role::{self, exists_role_by_id}};
+use crate::{configs::{config_bcrypt::{encrypt_password, verify_password}, config_jwt::{generate_token, get_email_by_token, valid_token}}, entities::{dtos::user_dtos::{LoginDTO, UserCreateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO, UserUpdateDTO}, tb_user::{self, ActiveModel, Model}}, guards::guard_user::Authentication, services::service_role::{self, exists_role_by_id}};
+
+pub async fn login(
+    database: &DatabaseConnection,
+    login_dto: LoginDTO
+) -> Result<String, ()> {
+
+    let user = find_user_by_email(database, login_dto.get_email().clone()).await;
+
+    match user {
+     
+        Some(user) => {
+            if verify_password(login_dto.get_password(), &user.password) {
+                let token = generate_token(user.email.clone());
+
+                return Ok(token.unwrap());
+            }
+            Err(())
+        },
+        None => Err(())
+
+    }
+
+}
 
 pub async fn get_all_users(
     database: &DatabaseConnection
@@ -43,13 +66,15 @@ pub async fn create_user(
         id: ActiveValue::NotSet,
         username: ActiveValue::set(user_dto.get_username().clone()),
         email: ActiveValue::Set(user_dto.get_email().clone()),
-        password: ActiveValue::Set(user_dto.get_password().clone()),
+        password: ActiveValue::Set(
+            encrypt_password(user_dto.get_password())
+        ),
         role_id: ActiveValue::Set(user_dto.get_role_id().clone())
     };
 
     let result = tb_user::Entity::insert(user)
         .exec(database)
-            .await;
+        .await;
     
     match result {
         Ok(_) => Ok("Usuário criado com sucesso"),

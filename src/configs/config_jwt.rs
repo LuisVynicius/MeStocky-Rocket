@@ -8,9 +8,9 @@ use crate::configs::config_environment::get_jwt_secret;
 pub fn generate_token(email: String) -> Result<String, Error> {
 
     let expiration = SystemTime::now()
-    .duration_since(UNIX_EPOCH)
-    .unwrap()
-    .as_secs() + 14400;
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs() + 14400;
 
     let claim = Claim {
         sub: email,
