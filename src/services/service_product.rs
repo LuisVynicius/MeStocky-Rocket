@@ -1,17 +1,32 @@
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 
-use crate::entities::{dtos::product_dtos::{ProductCreateDTO, ProductDTO}, tb_product::{self, ActiveModel}};
+use crate::{entities::{dtos::product_dtos::{ProductCreateDTO, ProductDTO, ProductViewDTO}, tb_product::{self, ActiveModel}}, services::service_category};
 
 pub async fn get_all_products(
     database: &DatabaseConnection,
-) -> Vec<ProductDTO> {
+) -> Vec<ProductViewDTO> {
 
     let products = tb_product::Entity::find().all(database).await;
 
-    products.unwrap()
-        .into_iter().map(
-            |model| ProductDTO::new(model.id, model.name, model.quantity, model.min_quantity, model.category_id)
-        ).collect()
+    let products = {
+   
+        let mut  vec = Vec::new();
+
+        for model in products.unwrap() {
+
+            let category = service_category::find_category_by_id(database, model.category_id).await.unwrap();
+
+            vec.push(
+                ProductViewDTO::new(model.id, model.name, model.quantity, model.min_quantity, category.name)
+            );
+
+        }
+
+        vec
+   
+    };
+
+    return products;
 
 }
 

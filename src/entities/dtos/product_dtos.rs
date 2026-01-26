@@ -96,3 +96,34 @@ impl ProductCreateDTO {
     }
 
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct ProductViewDTO {
+    id: u64,
+    name: String,
+    quantity: u64,
+    min_quantity: u64,
+    category: String
+}
+
+impl ProductViewDTO {
+
+    pub fn new(
+        id: u64,
+        name: String,
+        quantity: u64,
+        min_quantity: u64,
+        category: String
+    ) -> Self {
+
+        Self {
+            id,
+            name,
+            quantity,
+            min_quantity,
+            category
+        }
+
+    }
+
+}

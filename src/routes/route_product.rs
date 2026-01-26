@@ -1,13 +1,13 @@
 use rocket::{State, http::Status, response::status::Custom, serde::json::Json};
 use sea_orm::DatabaseConnection;
 
-use crate::{entities::dtos::product_dtos::{ProductCreateDTO, ProductDTO}, guards::guard_user::Authentication, services::service_product};
+use crate::{entities::dtos::product_dtos::{ProductCreateDTO, ProductDTO, ProductViewDTO}, guards::guard_user::Authentication, services::service_product};
 
 #[get("/product")]
 pub async fn route_product_get_all(
     database: &State<DatabaseConnection>,
     _authentication: Authentication
-) -> Json<Vec<ProductDTO>> {
+) -> Json<Vec<ProductViewDTO>> {
 
     let products = service_product::get_all_products(database).await;
 
