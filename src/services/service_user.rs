@@ -1,6 +1,6 @@
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 
-use crate::{configs::{config_bcrypt::{encrypt_password, verify_password}, config_jwt::{generate_token, get_email_by_token, valid_token}}, entities::{dtos::user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserCredentialsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO}, tb_user::{self, ActiveModel, Model}}, guards::guard_user::Authentication, services::service_role::{self, exists_role_by_id}};
+use crate::{configs::{config_bcrypt::{encrypt_password, verify_password}, config_jwt::{generate_token, get_email_by_token, valid_token}}, entities::{dtos::user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserInformationsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO}, tb_user::{self, ActiveModel, Model}}, guards::guard_user::Authentication, services::service_role::{self, exists_role_by_id}};
 
 pub async fn login(
     database: &DatabaseConnection,
@@ -83,9 +83,9 @@ pub async fn create_user(
 
 }
 
-pub async fn update_user(
+pub async fn update_user_informations(
     database: &DatabaseConnection,
-    user_update_dto: UserCredentialsUpdateDTO,
+    mut user_update_dto: UserInformationsUpdateDTO,
     authentication: Authentication
 ) -> Result<&'static str, ()> {
 

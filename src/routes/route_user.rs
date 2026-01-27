@@ -1,7 +1,7 @@
 use rocket::{State, http::Status, response::status::{self, Custom}, serde::json::Json};
 use sea_orm::DatabaseConnection;
 
-use crate::{entities::dtos::user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserCredentialsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO}, guards::guard_user::Authentication, services::service_user::{self}};
+use crate::{entities::dtos::user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserInformationsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO}, guards::guard_user::Authentication, services::service_user::{self}};
 
 #[get("/user")]
 pub async fn route_user_get_all(
@@ -46,13 +46,13 @@ pub async fn route_user_create(
 }
 
 #[put("/user", data="<user_update_dto>")]
-pub async fn route_user_update(
+pub async fn route_user_update_informations(
     database: &State<DatabaseConnection>,
     authentication: Authentication,
-    user_update_dto: Json<UserCredentialsUpdateDTO>
+    user_update_dto: Json<UserInformationsUpdateDTO>
 ) -> Result<Custom<&'static str>, Status> {
 
-    let result = service_user::update_user(database, user_update_dto.0, authentication).await;
+    let result = service_user::update_user_informations(database, user_update_dto.0, authentication).await;
 
     match result {
         Ok(message) => Ok(Custom(Status::Ok, message)),
