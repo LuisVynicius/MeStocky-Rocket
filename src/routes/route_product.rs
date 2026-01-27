@@ -1,7 +1,7 @@
 use rocket::{State, http::Status, response::status::Custom, serde::json::Json};
 use sea_orm::DatabaseConnection;
 
-use crate::{entities::dtos::product_dtos::{ProductChangeQuantityDTO, ProductCreateDTO, ProductDTO, ProductViewDTO}, guards::guard_user::Authentication, services::service_product};
+use crate::{entities::dtos::product_dtos::{ProductChangeQuantityDTO, ProductCreateDTO, ProductDTO, ProductInformationsViewDTO, ProductViewDTO}, guards::guard_user::Authentication, services::service_product};
 
 #[get("/product")]
 pub async fn route_product_get_all(
@@ -15,18 +15,31 @@ pub async fn route_product_get_all(
 
 }
 
+#[get("/product/informations")]
+pub async fn route_product_informations(
+    database: &State<DatabaseConnection>,
+    _authentication: Authentication
+) -> Json<ProductInformationsViewDTO> {
+
+    let products = service_product::get_products_informations(database).await;
+
+    Json(products)
+
+}
+
+
 #[post("/product", data="<product_create_dto>")]
 pub async fn route_product_create(
     database: &State<DatabaseConnection>,
     _authentication: Authentication,
     product_create_dto: Json<ProductCreateDTO>
-) -> Result<Custom<&'static str>, Status> {
+) -> Status {
 
     let result = service_product::create_product(database, product_create_dto.0).await;
 
     match result {
-        Ok(message) => Ok(Custom(Status::Created, message)),
-        Err(_) => Err(Status::Conflict)
+        Ok(_) => Status::Created,
+        Err(_) => Status::Conflict
     }
 
 }

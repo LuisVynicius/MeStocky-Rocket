@@ -1,6 +1,6 @@
-use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, QueryFilter, Statement};
 
-use crate::{entities::{dtos::product_dtos::{ProductChangeQuantityDTO, ProductCreateDTO, ProductDTO, ProductViewDTO}, tb_product::{self, ActiveModel, Model}}, services::service_category};
+use crate::{entities::{dtos::product_dtos::{ProductChangeQuantityDTO, ProductCreateDTO, ProductDTO, ProductInformationsGetDTO, ProductInformationsViewDTO, ProductViewDTO}, tb_product::{self, ActiveModel, Model}}, services::service_category};
 
 pub async fn get_all_products(
     database: &DatabaseConnection,
@@ -140,6 +140,30 @@ pub async fn change_quantity(
 
     }
 
+}
+
+pub async fn get_products_informations(
+    database: &DatabaseConnection,
+) -> ProductInformationsViewDTO {
+
+    let stmt = Statement::from_string(
+        DbBackend::MySql,
+        r#"
+        SELECT
+            CAST(COUNT(*) AS UNSIGNED) AS quantity,
+            CAST(SUM(quantity) AS UNSIGNED) AS total,
+            CAST(SUM(quantity < min_quantity) AS UNSIGNED) AS warnings
+        FROM tb_product
+        "#.to_owned(),
+    );
+
+    let result = ProductInformationsGetDTO::find_by_statement(stmt)
+        .one(database)
+        .await
+        .unwrap();
+
+    result.unwrap().into()
+    
 }
 
 pub async fn find_product_by_id(

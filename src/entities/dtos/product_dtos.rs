@@ -1,3 +1,4 @@
+use sea_orm::FromQueryResult;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -137,4 +138,32 @@ impl ProductChangeQuantityDTO {
 
     }
 
+}
+
+#[derive(FromQueryResult)]
+pub struct ProductInformationsGetDTO {
+    quantity: Option<u64>,
+    total: Option<u64>,
+    warnings: Option<u64>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ProductInformationsViewDTO {
+    quantity:u64,
+    total: u64,
+    warnings: u64,
+}
+
+impl From<ProductInformationsGetDTO> for ProductInformationsViewDTO {
+
+    fn from(value: ProductInformationsGetDTO) -> Self {
+        
+        Self {
+            quantity: value.quantity.unwrap_or(0),
+            total: value.total.unwrap_or(0),
+            warnings: value.warnings.unwrap_or(0)
+        }
+
+    }
+    
 }
