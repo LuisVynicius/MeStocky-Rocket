@@ -3,3 +3,4 @@ pub mod route_role;
 pub mod route_category;
 pub mod route_product;
 pub mod route_return_reason;
+pub mod route_report;

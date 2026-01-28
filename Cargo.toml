@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 bcrypt = "0.18.0"
+chrono = "0.4.43"
 dotenv = "0.15.0"
 jsonwebtoken = { version="10.2.0", features=["aws_lc_rs"] }
 rocket = { version="0.5.1", features=["json"] }

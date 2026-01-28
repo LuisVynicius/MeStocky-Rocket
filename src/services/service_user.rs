@@ -85,7 +85,7 @@ pub async fn create_user(
 
 pub async fn update_user_informations(
     database: &DatabaseConnection,
-    mut user_update_dto: UserInformationsUpdateDTO,
+    user_update_dto: UserInformationsUpdateDTO,
     authentication: Authentication
 ) -> Result<&'static str, ()> {
 

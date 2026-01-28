@@ -1,6 +1,6 @@
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, QueryFilter, Statement};
 
-use crate::{entities::{dtos::product_dtos::{ProductChangeQuantityDTO, ProductCreateDTO, ProductDTO, ProductInformationsGetDTO, ProductInformationsViewDTO, ProductViewDTO}, tb_product::{self, ActiveModel, Model}}, services::service_category};
+use crate::{entities::{dtos::product_dtos::{ProductChangeQuantityDTO, ProductCreateDTO, ProductDTO, ProductInformationsGetDTO, ProductInformationsViewDTO, ProductViewDTO}, tb_product::{self, ActiveModel, Model}}, services::{service_category, service_report}};
 
 pub async fn get_all_products(
     database: &DatabaseConnection,
@@ -37,7 +37,6 @@ pub async fn create_product(
 
     let product = ActiveModel {
         name: ActiveValue::Set(product_create_dto.get_name().clone()),
-        quantity: ActiveValue::Set(*product_create_dto.get_quantity()),
         min_quantity: ActiveValue::Set(*product_create_dto.get_min_quantity()),
         category_id: ActiveValue::Set(*product_create_dto.get_category_id()),
         ..Default::default()
@@ -47,7 +46,7 @@ pub async fn create_product(
 
     match result {
 
-        Ok(_) => Ok("Produto criada com sucesso"),
+        Ok(_) => Ok("Produto criado com sucesso"),
         Err(_) => Err(())
 
     }
@@ -131,7 +130,10 @@ pub async fn change_quantity(
 
             match result {
 
-                Ok(_) => Ok("Quantidade alterada com sucesso"),
+                Ok(_) => {
+                    service_report::create_report(database, product_change_quantity_dto).await.unwrap();
+                    Ok("Quantidade alterada com sucesso")
+                },
                 Err(_) => Err(())
 
             }

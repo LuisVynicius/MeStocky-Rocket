@@ -11,6 +11,7 @@ pub struct Model {
     pub quantity: u64,
     pub reason_id: u64,
     pub product_id: u64,
+    pub change_type: i8,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
