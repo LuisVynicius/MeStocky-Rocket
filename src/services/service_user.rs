@@ -15,7 +15,7 @@ pub async fn login(
             if verify_password(login_dto.get_password(), &user.password) {
                 let token = generate_token(user.email.clone());
 
-                return Ok(AuthenticationDTO::new(token.unwrap()));
+                return Ok(AuthenticationDTO::new(token.unwrap(), user.role, user.username, UserRole::code_to_string(user.role)));
             }
             Err(())
         },

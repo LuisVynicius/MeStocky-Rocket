@@ -109,28 +109,27 @@ impl LoginDTO {
 
 #[derive(Serialize, Deserialize)]
 pub struct AuthenticationDTO {
-    token: String
+    token: String,
+    role: u8,
+    username: String,
+    rolename: String
 }
 
 impl AuthenticationDTO {
 
-    pub fn new(token: String) -> Self {
+    pub fn new(
+        token: String,
+        role: u8,
+        username: String,
+        role_name: String
+    ) -> Self {
 
         Self {
-            token
+            token,
+            role,
+            username,
+            rolename: role_name
         }
-
-    }
-
-    pub fn get_token(&self) -> &String {
-
-        &self.token
-
-    }
-
-    pub fn set_token(&mut self, token: String) {
-
-        self.token = token;
 
     }
 
