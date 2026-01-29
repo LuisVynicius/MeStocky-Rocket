@@ -1,6 +1,6 @@
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 
-use crate::{configs::{config_bcrypt::{encrypt_password, verify_password}, config_jwt::{generate_token, get_email_by_token, valid_token}}, entities::{dtos::user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserInformationsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO}, tb_user::{self, ActiveModel, Model}}, guards::guard_user::Authentication, services::service_role::{self, exists_role_by_id}};
+use crate::{configs::{config_bcrypt::{encrypt_password, verify_password}, config_jwt::{generate_token, get_email_by_token, valid_token}}, entities::{dtos::user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserInformationsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO}, enums::user_enums::UserRole, tb_user::{self, ActiveModel, Model}}, guards::guard_user::Authentication};
 
 pub async fn login(
     database: &DatabaseConnection,
@@ -37,10 +37,10 @@ pub async fn get_all_users(
 
         for model in users.unwrap() {
 
-            let role = service_role::find_role_by_id(database, model.role_id).await.unwrap();
+            let role = UserRole::code_to_string(model.role);
 
             vec.push(
-                UserSummaryForAdminDTO::new(model.id, model.username, model.email, role.name)
+                UserSummaryForAdminDTO::new(model.id, model.username, model.email, role)
             );
 
         }
@@ -69,7 +69,7 @@ pub async fn create_user(
         password: ActiveValue::Set(
             encrypt_password(user_dto.get_password())
         ),
-        role_id: ActiveValue::Set(user_dto.get_role_id().clone())
+        role: ActiveValue::Set(0)
     };
 
     let result = tb_user::Entity::insert(user)
@@ -134,17 +134,13 @@ pub async fn switch_role(
     _authentication: Authentication
 ) -> Result<&'static str, ()> {
 
-    if 
-        !exists_user_by_id(database, *user_role_update_dto.get_user_id()).await ||
-        !exists_role_by_id(database, *user_role_update_dto.get_role_id()).await
-
-    {
+    if !exists_user_by_id(database, *user_role_update_dto.get_user_id()).await {
         return Err(());
     }
 
     let user = ActiveModel {
         id: ActiveValue::Set(*user_role_update_dto.get_user_id()),
-        role_id: ActiveValue::Set(*user_role_update_dto.get_role_id()),
+        role: ActiveValue::Set(*user_role_update_dto.get_role()),
         ..Default::default()
     };
 

@@ -26,7 +26,7 @@ pub struct UserCreateDTO {
     username: String,
     password: String,
     email: String,
-    role_id: u64
+    role: u64
 }
 
 impl UserCreateDTO {
@@ -43,16 +43,12 @@ impl UserCreateDTO {
         &self.email
     }
 
-    pub fn get_role_id(&self) -> &u64 {
-        &self.role_id
-    }
-
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct UserRoleUpdateDTO {
     user_id: u64,
-    role_id: u64
+    role: u8
 }
 
 impl UserRoleUpdateDTO {
@@ -61,8 +57,8 @@ impl UserRoleUpdateDTO {
         &self.user_id
     }
 
-    pub fn get_role_id(&self) -> &u64 {
-        &self.role_id
+    pub fn get_role(&self) -> &u8 {
+        &self.role
     }
 
 }
@@ -123,6 +119,12 @@ impl AuthenticationDTO {
         Self {
             token
         }
+
+    }
+
+    pub fn get_token(&self) -> &String {
+
+        &self.token
 
     }
 

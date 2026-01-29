@@ -30,6 +30,14 @@ pub async fn route_login(
 
 }
 
+#[post("/login/valid", data="<authentication_dto>")]
+pub async fn route_valid_token(
+    database: &State<DatabaseConnection>,
+    authentication_dto: Json<AuthenticationDTO>
+) {
+
+}
+
 #[post("/user", data="<user_create_dto>")]
 pub async fn route_user_create(
     database: &State<DatabaseConnection>,

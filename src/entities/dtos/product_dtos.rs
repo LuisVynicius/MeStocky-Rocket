@@ -2,31 +2,17 @@ use sea_orm::FromQueryResult;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
-pub struct ProductDTO {
-    id: u64,
+pub struct ProductCreateDTO {
     name: String,
-    quantity: u64,
     min_quantity: u64,
     category_id: u64
 }
 
-impl ProductDTO {
-
-    pub fn get_id(&self) -> &u64 {
-
-        &self.id
-
-    }
+impl ProductCreateDTO {
 
     pub fn get_name(&self) -> &String {
 
         &self.name
-
-    }
-
-    pub fn get_quantity(&self) -> &u64 {
-
-        &self.quantity
 
     }
 
@@ -45,13 +31,20 @@ impl ProductDTO {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct ProductCreateDTO {
+pub struct ProductUpdateDTO {
+    id: u64,
     name: String,
     min_quantity: u64,
     category_id: u64
 }
 
-impl ProductCreateDTO {
+impl ProductUpdateDTO {
+
+    pub fn get_id(&self) -> &u64 {
+
+        &self.id
+
+    }
 
     pub fn get_name(&self) -> &String {
 

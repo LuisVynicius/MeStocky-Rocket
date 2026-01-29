@@ -6,7 +6,7 @@ pub mod tb_category;
 pub mod tb_product;
 pub mod tb_report;
 pub mod tb_return_reason;
-pub mod tb_role;
 pub mod tb_user;
 
 pub mod dtos;
+pub mod enums;
