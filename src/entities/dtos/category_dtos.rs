@@ -1,3 +1,4 @@
+use sea_orm::FromQueryResult;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -37,4 +38,11 @@ impl CategoryCreateDTO {
         &self.name
     }
 
+}
+
+#[derive(Serialize, Deserialize, FromQueryResult)]
+pub struct CategoryViewDTO {
+    id: u64,
+    name: String,
+    quantity: Option<u64>
 }

@@ -1,7 +1,7 @@
 use rocket::{State, http::Status, response::status::Custom, serde::json::Json};
 use sea_orm::DatabaseConnection;
 
-use crate::{entities::dtos::category_dtos::{CategoryCreateDTO, CategoryDTO}, guards::guard_user::Authentication, services::service_category};
+use crate::{entities::dtos::category_dtos::{CategoryCreateDTO, CategoryDTO, CategoryViewDTO}, guards::guard_user::Authentication, services::service_category};
 
 #[get("/category")]
 pub async fn route_category_get_all(
@@ -15,18 +15,30 @@ pub async fn route_category_get_all(
 
 }
 
+#[get("/category/admin")]
+pub async fn route_category_get_all_admin(
+    database: &State<DatabaseConnection>,
+    _authentication: Authentication
+) -> Json<Vec<CategoryViewDTO>> {
+
+    let categories = service_category::get_all_categories_admin(database).await;
+
+    Json(categories)
+
+}
+
 #[post("/category", data="<category_create_dto>")]
 pub async fn route_category_create(
     database: &State<DatabaseConnection>,
     _authentication: Authentication,
     category_create_dto: Json<CategoryCreateDTO>
-) -> Result<Custom<&'static str>, Status> {
+) -> Status {
 
     let result = service_category::create_category(database, category_create_dto.0).await;
 
     match result {
-        Ok(message) => Ok(Custom(Status::Created, message)),
-        Err(_) => Err(Status::Conflict)
+        Ok(_) => Status::Created,
+        Err(_) => Status::Conflict
     }
 
 }
