@@ -34,13 +34,13 @@ pub async fn route_login(
 pub async fn route_valid_token(
     database: &State<DatabaseConnection>,
     authentication: Authentication
-) -> Custom<Json<ValidedTokenDTO>> {
+) -> Status {
 
     let result = service_user::valid(database, authentication).await;
 
     match result.get_valided() {
-        &false => Custom(Status::Forbidden, Json(result)),
-        &true => Custom(Status::Ok, Json(result)),
+        &false => Status::Forbidden,
+        &true => Status::Ok
     }
 
 }

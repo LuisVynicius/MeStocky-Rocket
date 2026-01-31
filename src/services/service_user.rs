@@ -31,7 +31,7 @@ pub async fn valid(
 ) -> ValidedTokenDTO { 
 
     let token_is_valid = config_jwt::valid_token(&authentication.0);
-    let user_exists = find_user_by_email(database, authentication.0).await.is_some();
+    let user_exists = find_user_by_email(database, config_jwt::get_email_by_token(authentication.0)).await.is_some();
 
     ValidedTokenDTO::new(token_is_valid && user_exists)
 
