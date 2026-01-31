@@ -81,7 +81,7 @@ pub async fn create_user(
         password: ActiveValue::Set(
             encrypt_password(user_dto.get_password())
         ),
-        role: ActiveValue::Set(0)
+        role: ActiveValue::Set(*user_dto.get_role())
     };
 
     let result = tb_user::Entity::insert(user)
@@ -101,12 +101,6 @@ pub async fn update_user_informations(
     authentication: Authentication
 ) -> Result<&'static str, ()> {
 
-    let valided_token = valid_token(&authentication.0);
-
-    if !valided_token {
-        return Err(());
-    }
-
     let email = get_email_by_token(authentication.0);
 
     let logged_user = find_user_by_email(database, email).await;
@@ -118,12 +112,22 @@ pub async fn update_user_informations(
             let update_user = ActiveModel {
                 id: ActiveValue::Set(model.id),
                 email: match user_update_dto.get_email() {
-                    Some(email) => ActiveValue::Set(email.clone()),
-                    None => ActiveValue::default()
+                    Some(email) => {
+                        match email.trim().is_empty() {
+                            true => ActiveValue::Set(model.email),
+                            false => ActiveValue::Set(email.clone())
+                        }
+                    },
+                    None => ActiveValue::Set(model.email)
                 },
                 username: match user_update_dto.get_username() {
-                    Some(username) => ActiveValue::Set(username.clone()),
-                    None => ActiveValue::default()
+                    Some(username) => {
+                        match username.trim().is_empty() {
+                            true => ActiveValue::Set(model.username),
+                            false => ActiveValue::Set(username.clone())
+                        }
+                    },
+                    None => ActiveValue::Set(model.username)
                 },
                 ..Default::default()
             };

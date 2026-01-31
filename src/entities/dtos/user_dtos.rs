@@ -26,7 +26,7 @@ pub struct UserCreateDTO {
     username: String,
     password: String,
     email: String,
-    role: u64
+    role: u8
 }
 
 impl UserCreateDTO {
@@ -41,6 +41,10 @@ impl UserCreateDTO {
 
     pub fn get_email(&self) -> &String {
         &self.email
+    }
+
+    pub fn get_role(&self) -> &u8 {
+        &self.role
     }
 
 }

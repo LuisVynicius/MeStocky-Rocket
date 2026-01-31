@@ -49,29 +49,29 @@ pub async fn route_valid_token(
 pub async fn route_user_create(
     database: &State<DatabaseConnection>,
     user_create_dto: Json<UserCreateDTO>
-) -> Result<Custom<&'static str>, Status> {
+) -> Status {
 
     let result = service_user::create_user(database, user_create_dto.0).await;
 
-    match result {
-        Ok(message) => Ok(Custom(Status::Created, message)),
-        Err(_) => Err(Status::Conflict)
+    match result { 
+        Ok(_) => Status::Created,
+        Err(_) => Status::Conflict
     }
 
 }
 
-#[put("/user", data="<user_update_dto>")]
+#[put("/user/informations", data="<user_update_dto>")]
 pub async fn route_user_update_informations(
     database: &State<DatabaseConnection>,
     authentication: Authentication,
     user_update_dto: Json<UserInformationsUpdateDTO>
-) -> Result<Custom<&'static str>, Status> {
+) -> Status {
 
     let result = service_user::update_user_informations(database, user_update_dto.0, authentication).await;
 
     match result {
-        Ok(message) => Ok(Custom(Status::Ok, message)),
-        Err(_) => Err(Status::Forbidden)
+        Ok(_) => Status::Ok,
+        Err(_) => Status::Forbidden
     }
 
 }
