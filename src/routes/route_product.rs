@@ -49,14 +49,14 @@ pub async fn route_product_update(
     database: &State<DatabaseConnection>,
     _authentication: Authentication,
     product_update_dto: Json<ProductUpdateDTO>
-) -> Result<Custom<&'static str>, Status> {
+) -> Status {
 
     let result = service_product::update_product(database, product_update_dto.0).await;
 
     match result {
 
-        Ok(message) => Ok(Custom(Status::Ok, message)),
-        Err(_) => Err(Status::Conflict)
+        Ok(_) => Status::Ok,
+        Err(_) => Status::Conflict
 
     }
 

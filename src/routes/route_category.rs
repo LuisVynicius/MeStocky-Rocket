@@ -1,4 +1,4 @@
-use rocket::{State, http::Status, response::status::Custom, serde::json::Json};
+use rocket::{State, http::Status, serde::json::Json};
 use sea_orm::DatabaseConnection;
 
 use crate::{entities::dtos::category_dtos::{CategoryCreateDTO, CategoryDTO, CategoryViewDTO}, guards::guard_user::Authentication, services::service_category};
@@ -48,14 +48,14 @@ pub async fn route_category_update(
     database: &State<DatabaseConnection>,
     _authentication: Authentication,
     category_update_dto: Json<CategoryDTO>
-) -> Result<Custom<&'static str>, Status> {
+) -> Status {
 
     let result = service_category::update_category(database, category_update_dto.0).await;
 
     match result {
 
-        Ok(message) => Ok(Custom(Status::Ok, message)),
-        Err(_) => Err(Status::Conflict)
+        Ok(_) => Status::Ok,
+        Err(_) => Status::Conflict
 
     }
 
