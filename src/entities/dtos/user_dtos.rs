@@ -108,6 +108,29 @@ impl LoginDTO {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct ValidedTokenDTO {
+    valided: bool
+}
+
+impl ValidedTokenDTO {
+
+    pub fn new(valided: bool) -> Self {
+
+        Self {
+            valided
+        }
+
+    }
+
+    pub fn get_valided(&self) -> &bool {
+
+        &self.valided
+
+    } 
+
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct AuthenticationDTO {
     token: String,
     role: u8,

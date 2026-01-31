@@ -14,7 +14,7 @@ impl<'r> FromRequest<'r> for Authentication {
         let token = req.headers().get_one("token");
 
         match token {
-            Some(token) => match valid_token(token.to_string()) {
+            Some(token) => match valid_token(token) {
                 true => Outcome::Success(Authentication(token.to_string())),
                 false => Outcome::Error((Status::Forbidden, "Token de autenticação inválido"))
             },

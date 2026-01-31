@@ -1,6 +1,6 @@
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 
-use crate::{configs::{config_bcrypt::{encrypt_password, verify_password}, config_jwt::{generate_token, get_email_by_token, valid_token}}, entities::{dtos::user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserInformationsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO}, enums::user_enums::UserRole, tb_user::{self, ActiveModel, Model}}, guards::guard_user::Authentication};
+use crate::{configs::{config_bcrypt::{encrypt_password, verify_password}, config_jwt::{self, generate_token, get_email_by_token, valid_token}}, entities::{dtos::user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserInformationsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO, ValidedTokenDTO}, enums::user_enums::UserRole, tb_user::{self, ActiveModel, Model}}, guards::guard_user::Authentication};
 
 pub async fn login(
     database: &DatabaseConnection,
@@ -22,6 +22,18 @@ pub async fn login(
         None => Err(())
 
     }
+
+}
+
+pub async fn valid(
+    database: &DatabaseConnection,
+    authentication: Authentication
+) -> ValidedTokenDTO { 
+
+    let token_is_valid = config_jwt::valid_token(&authentication.0);
+    let user_exists = find_user_by_email(database, authentication.0).await.is_some();
+
+    ValidedTokenDTO::new(token_is_valid && user_exists)
 
 }
 
@@ -89,7 +101,7 @@ pub async fn update_user_informations(
     authentication: Authentication
 ) -> Result<&'static str, ()> {
 
-    let valided_token = valid_token(authentication.0.clone());
+    let valided_token = valid_token(&authentication.0);
 
     if !valided_token {
         return Err(());

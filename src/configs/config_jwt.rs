@@ -31,7 +31,7 @@ pub fn generate_token(email: String) -> Result<String, Error> {
 
 }
 
-pub fn valid_token(token: String) -> bool {
+pub fn valid_token(token: &str) -> bool {
 
     let jwt_secret = get_jwt_secret();
     
