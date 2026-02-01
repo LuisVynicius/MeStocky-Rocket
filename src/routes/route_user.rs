@@ -1,7 +1,7 @@
 use rocket::{State, http::Status, response::status::{self, Custom}, serde::json::Json};
 use sea_orm::DatabaseConnection;
 
-use crate::{entities::dtos::user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserInformationsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO}, guards::guard_user::Authentication, services::service_user::{self}};
+use crate::{entities::dtos::user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserInformationsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO, UserSummaryForAdminQueryDTO}, guards::guard_user::Authentication, services::service_user::{self}};
 
 #[get("/user")]
 pub async fn route_user_get_all(

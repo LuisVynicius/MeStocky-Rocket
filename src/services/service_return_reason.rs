@@ -1,6 +1,6 @@
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 
-use crate::entities::{dtos::return_reason_dtos::{ReturnReasonCreateDTO, ReturnReasonDTO}, tb_return_reason::{self, ActiveModel, Model}};
+use crate::entities::{dtos::return_reason_dtos::{ReturnReasonCreateDTO, ReturnReasonDTO}, tb_return_reason::{self, ActiveModel}};
 
 pub async fn get_all_reason(
     database: &DatabaseConnection,
@@ -61,19 +61,6 @@ pub async fn update_reason(
         Err(_) => Err(())
 
     }
-
-}
-
-pub async fn find_reason_by_id(
-    database: &DatabaseConnection,
-    id: u64
-) -> Option<Model> {
-
-    let reason = tb_return_reason::Entity::find_by_id(id)
-        .one(database)
-        .await;
-
-    reason.unwrap_or(None)
 
 }
 

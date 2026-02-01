@@ -1,6 +1,6 @@
-use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, QueryFilter, Statement};
 
-use crate::{configs::{config_bcrypt::{encrypt_password, verify_password}, config_jwt::{self, generate_token, get_email_by_token, valid_token}}, entities::{dtos::user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserInformationsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO, ValidedTokenDTO}, enums::user_enums::UserRole, tb_user::{self, ActiveModel, Model}}, guards::guard_user::Authentication};
+use crate::{configs::{config_bcrypt::{encrypt_password, verify_password}, config_jwt::{self, generate_token, get_email_by_token}}, entities::{dtos::user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserInformationsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO, UserSummaryForAdminQueryDTO, ValidedTokenDTO}, enums::user_enums::UserRole, tb_user::{self, ActiveModel, Model}}, guards::guard_user::Authentication};
 
 pub async fn login(
     database: &DatabaseConnection,
@@ -41,27 +41,24 @@ pub async fn get_all_users(
     database: &DatabaseConnection
 ) -> Vec<UserSummaryForAdminDTO> {
 
-    let users = tb_user::Entity::find().all(database).await;
+    let stmt = Statement::from_string(
+        DbBackend::MySql, 
+        r#"
+            SELECT 
+                tb_user.id,
+                tb_user.username,
+                tb_user.email,
+                tb_user.role
+            FROM tb_user
+        "#
+    );
 
-    let users = {
-   
-        let mut  vec = Vec::new();
+    let result = UserSummaryForAdminQueryDTO::find_by_statement(stmt).all(database).await;
 
-        for model in users.unwrap() {
-
-            let role = UserRole::code_to_string(model.role);
-
-            vec.push(
-                UserSummaryForAdminDTO::new(model.id, model.username, model.email, role)
-            );
-
-        }
-
-        vec
-   
-    };
-
-    return users;
+    result.unwrap()
+        .into_iter()
+        .map(|user| user.into())
+        .collect()
 
 }
 
@@ -199,19 +196,6 @@ pub async fn find_user_by_email(
     let user = tb_user::Entity::find()
         .filter(tb_user::Column::Email.eq(email))
         .one(database).await;
-
-    user.unwrap_or(None)
-
-}
-
-pub async fn find_user_by_id(
-    database: &DatabaseConnection,
-    id: u64
-) -> Option<Model> {
-
-    let user = tb_user::Entity::find_by_id(id)
-        .one(database)
-        .await;
 
     user.unwrap_or(None)
 

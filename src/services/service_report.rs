@@ -1,43 +1,35 @@
 use chrono::Utc;
-use sea_orm::{ActiveValue, DatabaseConnection, EntityTrait};
+use sea_orm::{ActiveValue, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, Statement};
 
-use crate::{entities::{dtos::{product_dtos::ProductChangeQuantityDTO, report_dtos::ReportViewDTO}, tb_report::{self, ActiveModel}}, services::{service_product, service_return_reason}};
+use crate::{entities::{dtos::{product_dtos::ProductChangeQuantityDTO, report_dtos::ReportViewDTO}, tb_report::{self, ActiveModel}}};
 
 pub async fn get_all_reports(
     database: &DatabaseConnection,
 ) -> Vec<ReportViewDTO> {
 
-    let reports = tb_report::Entity::find().all(database).await;
+    let stmt = Statement::from_string(
+        DbBackend::MySql, 
+    r#"
+            SELECT
+                tb_report.id,
+                tb_report.change_type,
+                tb_report.quantity,
+                tb_product.name AS product,
+                tb_return_reason.name AS reason,
+	            CAST(
+                    tb_report.date AS CHAR
+                ) AS date
+            FROM tb_report
+            JOIN tb_product
+                ON tb_product.id = tb_report.product_id 
+            JOIN tb_return_reason
+                ON tb_return_reason.id = tb_report.reason_id;
+        "#
+    );
 
-    let products = {
-   
-        let mut  vec = Vec::new();
+    let result = ReportViewDTO::find_by_statement(stmt).all(database).await;
 
-        for model in reports.unwrap() {
-
-            let product = service_product::find_product_by_id(database, model.product_id).await.unwrap();
-            let reason = service_return_reason::find_reason_by_id(database, model.reason_id).await.unwrap();
-
-            vec.push(
-                ReportViewDTO::new(
-                    model.id,
-                    match model.change_type {
-                        1 => true,
-                        _ => false
-                    },
-                    model.quantity,
-                    product.name,
-                    reason.name,
-                    model.date.to_string()
-            ));
-
-        }
-
-        vec
-   
-    };
-
-    return products;
+    result.unwrap()
 
 }
 
@@ -68,3 +60,4 @@ pub async fn create_report(
     }
 
 }
+

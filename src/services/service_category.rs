@@ -1,6 +1,6 @@
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, QueryFilter, Statement};
 
-use crate::entities::{dtos::category_dtos::{CategoryCreateDTO, CategoryDTO, CategoryViewDTO}, tb_category::{self, ActiveModel, Model}};
+use crate::entities::{dtos::category_dtos::{CategoryCreateDTO, CategoryDTO, CategoryViewDTO}, tb_category::{self, ActiveModel}};
 
 pub async fn get_all_categories(
     database: &DatabaseConnection
@@ -107,19 +107,6 @@ pub async fn delete_category_by_id(
         },
         Err(_) => Err(())
     }
-
-}
-
-pub async fn find_category_by_id(
-    database: &DatabaseConnection,
-    id: u64
-) -> Option<Model> {
-
-    let category = tb_category::Entity::find_by_id(id)
-        .one(database)
-        .await;
-
-    category.unwrap_or(None)
 
 }
 

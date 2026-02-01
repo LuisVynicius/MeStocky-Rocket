@@ -1,33 +1,54 @@
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, QueryFilter, Statement};
 
-use crate::{entities::{dtos::product_dtos::{ProductChangeQuantityDTO, ProductCreateDTO, ProductInformationsGetDTO, ProductInformationsViewDTO, ProductUpdateDTO, ProductViewDTO}, tb_product::{self, ActiveModel, Model}}, services::{service_category, service_report}};
+use crate::{entities::{dtos::product_dtos::{ProductChangeQuantityDTO, ProductCreateDTO, ProductInformationsGetDTO, ProductInformationsViewDTO, ProductUpdateDTO, ProductViewDTO}, tb_product::{self, ActiveModel, Model}}, services::service_report};
 
 pub async fn get_all_products(
     database: &DatabaseConnection,
 ) -> Vec<ProductViewDTO> {
 
-    let products = tb_product::Entity::find().all(database).await;
+    let stmt = Statement::from_string(
+        DbBackend::MySql, 
+    r#"
+            SELECT
+                tb_product.id,
+                tb_product.name,
+                tb_product.quantity,
+                tb_product.min_quantity,
+                tb_category.name as category
+            FROM tb_product
+            JOIN tb_category
+                ON tb_category.id = tb_product.category_id
+        "#
+    );
 
-    let products = {
-   
-        let mut  vec = Vec::new();
+    let result = ProductViewDTO::find_by_statement(stmt).all(database).await;
 
-        for model in products.unwrap() {
+    result.unwrap()
 
-            let category = service_category::find_category_by_id(database, model.category_id).await.unwrap();
+}
 
-            vec.push(
-                ProductViewDTO::new(model.id, model.name, model.quantity, model.min_quantity, category.name)
-            );
+pub async fn get_products_informations(
+    database: &DatabaseConnection,
+) -> ProductInformationsViewDTO {
 
-        }
+    let stmt = Statement::from_string(
+        DbBackend::MySql,
+        r#"
+        SELECT
+            CAST(COUNT(*) AS UNSIGNED) AS quantity,
+            CAST(SUM(quantity) AS UNSIGNED) AS total,
+            CAST(SUM(quantity < min_quantity) AS UNSIGNED) AS warnings
+        FROM tb_product
+        "#.to_owned(),
+    );
 
-        vec
-   
-    };
+    let result = ProductInformationsGetDTO::find_by_statement(stmt)
+        .one(database)
+        .await
+        .unwrap();
 
-    return products;
-
+    result.unwrap().into()
+    
 }
 
 pub async fn create_product(
@@ -152,30 +173,6 @@ pub async fn change_quantity(
 
 }
 
-pub async fn get_products_informations(
-    database: &DatabaseConnection,
-) -> ProductInformationsViewDTO {
-
-    let stmt = Statement::from_string(
-        DbBackend::MySql,
-        r#"
-        SELECT
-            CAST(COUNT(*) AS UNSIGNED) AS quantity,
-            CAST(SUM(quantity) AS UNSIGNED) AS total,
-            CAST(SUM(quantity < min_quantity) AS UNSIGNED) AS warnings
-        FROM tb_product
-        "#.to_owned(),
-    );
-
-    let result = ProductInformationsGetDTO::find_by_statement(stmt)
-        .one(database)
-        .await
-        .unwrap();
-
-    result.unwrap().into()
-    
-}
-
 pub async fn find_product_by_id(
     database: &DatabaseConnection,
     id: u64
@@ -203,29 +200,12 @@ async fn find_product_by_name(
 
 }
 
-pub async fn exists_product_by_id(
+async fn exists_product_by_id(
     database: &DatabaseConnection,
     id: u64
 ) -> bool {
     
     let result = tb_product::Entity::find_by_id(id)
-        .one(database)
-        .await;
-
-    match result {
-        Ok(model) => model.is_some(),
-        Err(_) => false
-    }
-
-}
-
-pub async fn exists_product_by_name(
-    database: &DatabaseConnection,
-    name: String
-) -> bool {
-    
-    let result = tb_product::Entity::find()
-        .filter(tb_product::Column::Name.eq(name))
         .one(database)
         .await;
 

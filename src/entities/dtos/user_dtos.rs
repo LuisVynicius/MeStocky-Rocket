@@ -1,4 +1,15 @@
+use sea_orm::FromQueryResult;
 use serde::{Deserialize, Serialize};
+
+use crate::entities::enums::user_enums::UserRole;
+
+#[derive(Serialize, Deserialize, FromQueryResult)]
+pub struct UserSummaryForAdminQueryDTO {
+    id: u64,
+    username: String,
+    email: String,
+    role: u8
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct UserSummaryForAdminDTO {
@@ -8,15 +19,17 @@ pub struct UserSummaryForAdminDTO {
     role: String
 }
 
-impl UserSummaryForAdminDTO {
+impl From<UserSummaryForAdminQueryDTO> for UserSummaryForAdminDTO {
 
-    pub fn new(id: u64, username: String, email: String, role: String) -> Self {
+    fn from(value: UserSummaryForAdminQueryDTO) -> Self {
+
         Self {
-            id,
-            username,
-            email,
-            role
+            id: value.id,
+            username: value.username,
+            email: value.email,
+            role: UserRole::code_to_string(value.role)
         }
+
     }
 
 }
