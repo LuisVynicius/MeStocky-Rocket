@@ -1,7 +1,7 @@
 use rocket::{State, http::Status, response::status::{self, Custom}, serde::json::Json};
 use sea_orm::DatabaseConnection;
 
-use crate::{entities::dtos::user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserInformationsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO, ValidedTokenDTO}, guards::guard_user::Authentication, services::service_user::{self}};
+use crate::{entities::dtos::user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserInformationsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO}, guards::guard_user::Authentication, services::service_user::{self}};
 
 #[get("/user")]
 pub async fn route_user_get_all(
@@ -88,6 +88,24 @@ pub async fn route_user_role_update(
     match result {
         Ok(message) => Ok(Custom(Status::Ok, message)),
         Err(_) => Err(Status::Forbidden)
+    }
+
+}
+
+#[delete("/user/<user_id>")]
+pub async fn route_user_delete(
+    database: &State<DatabaseConnection>,
+    _authentication: Authentication,
+    user_id: u64
+) -> Status {
+
+    let result = service_user::delete_user_by_id(database, user_id).await;
+
+    match result {
+
+        Ok(_) => Status::Ok,
+        Err(_) => Status::Conflict
+
     }
 
 }

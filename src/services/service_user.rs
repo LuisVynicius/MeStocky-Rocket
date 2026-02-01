@@ -144,6 +144,26 @@ pub async fn update_user_informations(
 
 }
 
+pub async fn delete_user_by_id(
+    database: &DatabaseConnection,
+    id: u64
+) -> Result<&'static str, ()> {
+
+    if !exists_user_by_id(database, id).await {
+        return Err(());
+    }
+
+    let result = tb_user::Entity::delete_by_id(id).exec(database).await;
+
+    match result {
+        Ok(_) => {
+            Ok("Usuário deletado com sucesso")
+        },
+        Err(_) => Err(())
+    }
+
+}
+
 pub async fn switch_role(
     database: &DatabaseConnection,
     user_role_update_dto: UserRoleUpdateDTO,

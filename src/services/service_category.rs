@@ -82,12 +82,30 @@ pub async fn update_category(
     let result = tb_category::Entity::update(category).exec(database).await;
 
     match result {
-
         Ok(_) => {
             Ok("Categoria atualizada com sucesso")
         },
         Err(_) => Err(())
+    }
 
+}
+
+pub async fn delete_category_by_id(
+    database: &DatabaseConnection,
+    id: u64
+) -> Result<&'static str, ()> {
+
+    if !exists_category_by_id(database, id).await {
+        return Err(());
+    }
+
+    let result = tb_category::Entity::delete_by_id(id).exec(database).await;
+
+    match result {
+        Ok(_) => {
+            Ok("Categoria deletada com sucesso")
+        },
+        Err(_) => Err(())
     }
 
 }

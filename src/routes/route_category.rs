@@ -60,3 +60,21 @@ pub async fn route_category_update(
     }
 
 }
+
+#[delete("/category/<category_id>")]
+pub async fn route_category_delete(
+    database: &State<DatabaseConnection>,
+    _authentication: Authentication,
+    category_id: u64
+) -> Status {
+
+    let result = service_category::delete_category_by_id(database, category_id).await;
+
+    match result {
+
+        Ok(_) => Status::Ok,
+        Err(_) => Status::Conflict
+
+    }
+
+}

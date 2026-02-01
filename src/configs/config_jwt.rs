@@ -10,7 +10,7 @@ pub fn generate_token(email: String) -> Result<String, Error> {
     let expiration = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
-        .as_secs() + 14400;
+        .as_secs() + 14400;// 4 Hours
 
     let claim = Claim {
         sub: email,
