@@ -1,4 +1,4 @@
-use sea_orm::{ActiveModelBehavior, ActiveValue, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, Statement};
+use sea_orm::{ActiveValue, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, Statement};
 
 use crate::entities::{dtos::{category_dtos::{CategoryCreateDTO, CategoryDTO, CategoryViewDTO}, generic_dtos::ExistsDTO}, tb_category::{self, ActiveModel}};
 
@@ -45,7 +45,7 @@ pub async fn create_category(
     category_create_dto: CategoryCreateDTO
 ) -> Result<&'static str, ()> {
 
-    if exists_category_by_name(database, category_create_dto.get_name()).await {
+    if exists_by_name(database, category_create_dto.get_name()).await {
 
         return Err(());
 
@@ -59,10 +59,8 @@ pub async fn create_category(
     let result = tb_category::Entity::insert(category).exec(database).await;
 
     match result {
-
         Ok(_) => Ok("Categoria criada com sucesso"),
         Err(_) => Err(())
-
     }
 
 }
@@ -72,11 +70,11 @@ pub async fn update_category(
     category_update_dto: CategoryDTO
 ) -> Result<&'static str, ()> {
 
-    if !exists_category_by_id(database, category_update_dto.get_id()).await {
+    if !exists_by_id(database, category_update_dto.get_id()).await {
         return Err(());
     }
 
-    if exists_category_by_name(database, category_update_dto.get_name()).await {
+    if exists_by_name(database, category_update_dto.get_name()).await {
         return Err(());
     }
 
@@ -98,7 +96,7 @@ pub async fn delete_category_by_id(
     id: u64
 ) -> Result<&'static str, ()> {
 
-    if !exists_category_by_id(database, &id).await {
+    if !exists_by_id(database, &id).await {
         return Err(());
     }
 
@@ -113,7 +111,7 @@ pub async fn delete_category_by_id(
 
 }
 
-async fn exists_category_by_id(
+async fn exists_by_id(
     database: &DatabaseConnection,
     id: &u64
 ) -> bool {
@@ -136,7 +134,7 @@ async fn exists_category_by_id(
 
 }
 
-async fn exists_category_by_name(
+async fn exists_by_name(
     database: &DatabaseConnection,
     name: &str
 ) -> bool {
@@ -161,11 +159,13 @@ async fn exists_category_by_name(
 
 fn create_update_active_model(category_update_dto: CategoryDTO) -> ActiveModel {
      
-     let mut active_model = ActiveModel::new();
-
-     if !category_update_dto.get_name().trim().is_empty() {
-        active_model.name = ActiveValue::Set(category_update_dto.get_name().clone())
-     }
+     let active_model = ActiveModel {
+        name: match category_update_dto.get_name().trim().is_empty() {
+            true => ActiveValue::NotSet,
+            false => ActiveValue::Set(category_update_dto.get_name().clone())
+        },
+        ..Default::default()
+     };
 
      active_model
 

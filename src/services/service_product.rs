@@ -1,6 +1,6 @@
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, QueryFilter, Statement};
 
-use crate::{entities::{dtos::product_dtos::{ProductChangeQuantityDTO, ProductCreateDTO, ProductInformationsGetDTO, ProductInformationsViewDTO, ProductUpdateDTO, ProductViewDTO}, tb_product::{self, ActiveModel, Model}}, services::service_report};
+use crate::{entities::{dtos::{generic_dtos::ExistsDTO, product_dtos::{ProductChangeQuantityDTO, ProductCreateDTO, ProductInformationsGetDTO, ProductInformationsViewDTO, ProductUpdateDTO, ProductViewDTO}}, tb_product::{self, ActiveModel, Model}}, services::service_report};
 
 pub async fn get_all_products(
     database: &DatabaseConnection,
@@ -56,6 +56,12 @@ pub async fn create_product(
     product_create_dto: ProductCreateDTO
 ) -> Result<&'static str, ()> {
 
+    if exists_by_name(database, product_create_dto.get_name()).await {
+
+        return Err(());
+
+    }
+
     let product = ActiveModel {
         name: ActiveValue::Set(product_create_dto.get_name().clone()),
         min_quantity: ActiveValue::Set(*product_create_dto.get_min_quantity()),
@@ -63,8 +69,6 @@ pub async fn create_product(
         quantity: ActiveValue::Set(0),
         ..Default::default()
     };
-
-    println!("{product:?}");
 
     let result = tb_product::Entity::insert(product).exec(database).await;
 
@@ -82,7 +86,7 @@ pub async fn update_product(
     product_update_dto: ProductUpdateDTO
 ) -> Result<&'static str, ()> {
 
-    if !exists_product_by_id(database, *product_update_dto.get_id()).await {
+    if !exists_by_id(database, product_update_dto.get_id()).await {
         return Err(());
     }
 
@@ -95,13 +99,7 @@ pub async fn update_product(
         None => {}
     }
 
-    let product = ActiveModel {
-        id: ActiveValue::Set(*product_update_dto.get_id()),
-        name: ActiveValue::Set(product_update_dto.get_name().clone()),
-        min_quantity: ActiveValue::Set(*product_update_dto.get_min_quantity()),
-        category_id: ActiveValue::Set(*product_update_dto.get_category_id()),
-        ..Default::default()
-    };
+    let product = create_update_active_model(product_update_dto);
 
     let result = tb_product::Entity::update(product).exec(database).await;
 
@@ -121,54 +119,27 @@ pub async fn change_quantity(
     product_change_quantity_dto: ProductChangeQuantityDTO
 ) -> Result<&'static str, ()> {
 
-    if !exists_product_by_id(database, *product_change_quantity_dto.get_id()).await {
+    if !exists_by_id(database, product_change_quantity_dto.get_id()).await {
 
         return Err(());
 
     }
 
-    let product = find_product_by_id(database, *product_change_quantity_dto.get_id()).await;
+    let product = find_product_by_id(database, *product_change_quantity_dto.get_id()).await.unwrap();
 
-    match product {
+    let updated_product = create_update_change_active_model(&product_change_quantity_dto, product);
 
-        Some(product) => {
-            let mut updated_product = ActiveModel::default();
-
-            updated_product.id = ActiveValue::Set(product.id);
-
-            let result;
-
-            match *product_change_quantity_dto.get_change_type() {
-
-                false => {
-                    if product.quantity < *product_change_quantity_dto.get_quantity() {
-                        return Err(());
-                    }
-                    
-                    updated_product.quantity = ActiveValue::Set(product.quantity - product_change_quantity_dto.get_quantity());
-
-                    result = tb_product::Entity::update(updated_product).exec(database).await;
-                },
-                true => {
-                    updated_product.quantity = ActiveValue::Set(product.quantity + product_change_quantity_dto.get_quantity());
-
-                    result = tb_product::Entity::update(updated_product).exec(database).await;
-                }
-
-            }
-
-            match result {
-
+    match updated_product {
+        Ok(new_product) => {
+            match tb_product::Entity::update(new_product).exec(database).await {
                 Ok(_) => {
                     service_report::create_report(database, product_change_quantity_dto).await.unwrap();
                     Ok("Quantidade alterada com sucesso")
                 },
                 Err(_) => Err(())
-
             }
         },
-        None => Err(())
-
+        Err(_) => Err(())
     }
 
 }
@@ -200,18 +171,91 @@ async fn find_product_by_name(
 
 }
 
-async fn exists_product_by_id(
+async fn exists_by_id(
     database: &DatabaseConnection,
-    id: u64
+    id: &u64
 ) -> bool {
     
-    let result = tb_product::Entity::find_by_id(id)
-        .one(database)
-        .await;
+    let stmt = Statement::from_string(
+        DbBackend::MySql,
+        format!("
+            SELECT
+                EXISTS(
+                    SELECT 1
+                    FROM tb_product
+                    WHERE tb_product.id = (\"{id}\")
+                ) AS 'exist'
+        ")
+    );
 
-    match result {
-        Ok(model) => model.is_some(),
-        Err(_) => false
-    }
+    let result = ExistsDTO::find_by_statement(stmt).one(database).await;
+    
+    result.unwrap().unwrap().get_into_exist()
 
+}
+
+async fn exists_by_name(
+    database: &DatabaseConnection,
+    name: &str
+) -> bool {
+
+    let stmt = Statement::from_string(
+        DbBackend::MySql,
+        format!("
+            SELECT
+                EXISTS(
+                    SELECT 1
+                    FROM tb_product
+                    WHERE tb_product.name = (\"{name}\")
+                ) AS 'exist'
+        ")
+    );
+
+    let result = ExistsDTO::find_by_statement(stmt).one(database).await;
+    
+    result.unwrap().unwrap().get_into_exist()
+
+}
+
+fn create_update_active_model(product_update_dto: ProductUpdateDTO) -> ActiveModel {
+     
+     let active_model = ActiveModel {
+        id: ActiveValue::Set(product_update_dto.get_id().clone()),
+        name: match product_update_dto.get_name().trim().is_empty() {
+            true => ActiveValue::NotSet,
+            false => ActiveValue::Set(product_update_dto.get_name().clone())
+        },
+        category_id: match product_update_dto.get_id() {
+            &0 => ActiveValue::NotSet,
+            _ => ActiveValue::Set(*product_update_dto.get_category_id())
+        },
+        min_quantity: match product_update_dto.get_min_quantity() {
+            &0 => ActiveValue::NotSet,
+            _ => ActiveValue::Set(*product_update_dto.get_min_quantity())
+        },
+        ..Default::default()
+     };
+
+     active_model
+
+}
+
+fn create_update_change_active_model(product_change_quantity_dto: &ProductChangeQuantityDTO, product: Model) -> Result<ActiveModel, ()> {
+
+    let active_model = ActiveModel {
+        id: ActiveValue::Set(product_change_quantity_dto.get_id().clone()),
+        quantity: match product_change_quantity_dto.get_change_type() {
+            &true => ActiveValue::Set(product.quantity + product_change_quantity_dto.get_quantity()),
+            &false => {
+                if product.quantity < *product_change_quantity_dto.get_quantity() {
+                    return Err(());
+                }
+                
+                ActiveValue::Set(product.quantity - product_change_quantity_dto.get_quantity())
+            },
+        },
+        ..Default::default()
+    };
+
+    Ok(active_model)
 }
