@@ -3,3 +3,4 @@ pub mod category_dtos;
 pub mod product_dtos;
 pub mod return_reason_dtos;
 pub mod report_dtos;
+pub mod generic_dtos;

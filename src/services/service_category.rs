@@ -1,6 +1,6 @@
-use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, QueryFilter, Statement};
+use sea_orm::{ActiveModelBehavior, ActiveValue, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, Statement};
 
-use crate::entities::{dtos::category_dtos::{CategoryCreateDTO, CategoryDTO, CategoryViewDTO}, tb_category::{self, ActiveModel}};
+use crate::entities::{dtos::{category_dtos::{CategoryCreateDTO, CategoryDTO, CategoryViewDTO}, generic_dtos::ExistsDTO}, tb_category::{self, ActiveModel}};
 
 pub async fn get_all_categories(
     database: &DatabaseConnection
@@ -45,6 +45,12 @@ pub async fn create_category(
     category_create_dto: CategoryCreateDTO
 ) -> Result<&'static str, ()> {
 
+    if exists_category_by_name(database, category_create_dto.get_name()).await {
+
+        return Err(());
+
+    }
+
     let category = ActiveModel {
         id: ActiveValue::NotSet,
         name: ActiveValue::Set(category_create_dto.get_name().clone())
@@ -66,18 +72,15 @@ pub async fn update_category(
     category_update_dto: CategoryDTO
 ) -> Result<&'static str, ()> {
 
-    if !exists_category_by_id(database, *category_update_dto.get_id()).await {
+    if !exists_category_by_id(database, category_update_dto.get_id()).await {
         return Err(());
     }
 
-    if exists_category_by_name(database, category_update_dto.get_name().clone()).await {
+    if exists_category_by_name(database, category_update_dto.get_name()).await {
         return Err(());
     }
 
-    let category = ActiveModel {
-        id: ActiveValue::Set(category_update_dto.get_id().clone()),
-        name: ActiveValue::Set(category_update_dto.get_name().clone())
-    };
+    let category = create_update_active_model(category_update_dto);
 
     let result = tb_category::Entity::update(category).exec(database).await;
 
@@ -95,7 +98,7 @@ pub async fn delete_category_by_id(
     id: u64
 ) -> Result<&'static str, ()> {
 
-    if !exists_category_by_id(database, id).await {
+    if !exists_category_by_id(database, &id).await {
         return Err(());
     }
 
@@ -110,35 +113,60 @@ pub async fn delete_category_by_id(
 
 }
 
-pub async fn exists_category_by_id(
+async fn exists_category_by_id(
     database: &DatabaseConnection,
-    id: u64
+    id: &u64
 ) -> bool {
     
-    let result = tb_category::Entity::find_by_id(id)
-        .one(database)
-        .await;
+    let stmt = Statement::from_string(
+        DbBackend::MySql,
+        format!("
+            SELECT
+                EXISTS(
+                    SELECT 1
+                    FROM tb_category
+                    WHERE tb_category.id = (\"{id}\")
+                ) AS 'exist'
+        ")
+    );
 
-    match result {
-        Ok(model) => model.is_some(),
-        Err(_) => false
-    }
+    let result = ExistsDTO::find_by_statement(stmt).one(database).await;
+    
+    result.unwrap().unwrap().get_into_exist()
 
 }
 
-pub async fn exists_category_by_name(
+async fn exists_category_by_name(
     database: &DatabaseConnection,
-    name: String
+    name: &str
 ) -> bool {
+
+    let stmt = Statement::from_string(
+        DbBackend::MySql,
+        format!("
+            SELECT
+                EXISTS(
+                    SELECT 1
+                    FROM tb_category
+                    WHERE tb_category.name = (\"{name}\")
+                ) AS 'exist'
+        ")
+    );
+
+    let result = ExistsDTO::find_by_statement(stmt).one(database).await;
     
-    let result = tb_category::Entity::find()
-        .filter(tb_category::Column::Name.eq(name))
-        .one(database)
-        .await;
-    
-    match result {
-        Ok(model) => model.is_some(),
-        Err(_) => false
-    }
+    result.unwrap().unwrap().get_into_exist()
+
+}
+
+fn create_update_active_model(category_update_dto: CategoryDTO) -> ActiveModel {
+     
+     let mut active_model = ActiveModel::new();
+
+     if !category_update_dto.get_name().trim().is_empty() {
+        active_model.name = ActiveValue::Set(category_update_dto.get_name().clone())
+     }
+
+     active_model
 
 }
