@@ -82,25 +82,25 @@ impl UserRoleUpdateDTO {
 
 #[derive(Serialize, Deserialize)]
 pub struct UserInformationsUpdateDTO {
-    username: Option<String>,
-    email: Option<String>,
+    username: String,
+    email: String,
 }
 
 impl UserInformationsUpdateDTO {
     
-    pub fn get_username(&self) -> &Option<String> {
+    pub fn get_username(&self) -> &String {
         &self.username
     }
 
-    pub fn set_username(&mut self, username: Option<String> ) {
+    pub fn set_username(&mut self, username: String ) {
         self.username = username;
     }
 
-    pub fn get_email(&self) -> &Option<String> {
+    pub fn get_email(&self) -> &String {
         &self.email
     }
 
-    pub fn set_email(&mut self, email: Option<String> ) {
+    pub fn set_email(&mut self, email: String ) {
         self.email = email;
     }
 
