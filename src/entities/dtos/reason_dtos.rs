@@ -1,12 +1,12 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
-pub struct ReturnReasonDTO {
+pub struct ReasonDTO {
     id: u64,
     name: String
 }
 
-impl ReturnReasonDTO {
+impl ReasonDTO {
 
     pub fn new(
         id: u64,
@@ -35,11 +35,11 @@ impl ReturnReasonDTO {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct ReturnReasonCreateDTO {
+pub struct ReasonCreateDTO {
     name: String
 }
 
-impl ReturnReasonCreateDTO {
+impl ReasonCreateDTO {
 
     pub fn get_name(&self) -> &String {
 

@@ -25,13 +25,13 @@ pub enum Relation {
     )]
     TbProduct,
     #[sea_orm(
-        belongs_to = "super::tb_return_reason::Entity",
+        belongs_to = "super::tb_reason::Entity",
         from = "Column::ReasonId",
-        to = "super::tb_return_reason::Column::Id",
+        to = "super::tb_reason::Column::Id",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    TbReturnReason,
+    TbReason,
 }
 
 impl Related<super::tb_product::Entity> for Entity {
@@ -40,9 +40,9 @@ impl Related<super::tb_product::Entity> for Entity {
     }
 }
 
-impl Related<super::tb_return_reason::Entity> for Entity {
+impl Related<super::tb_reason::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TbReturnReason.def()
+        Relation::TbReason.def()
     }
 }
 

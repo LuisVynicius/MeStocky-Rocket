@@ -7,17 +7,6 @@ pub enum UserRole {
 
 impl UserRole {
 
-    pub fn to_code(user_role: UserRole) -> u8 {
-
-        match user_role {
-            Self::Admin => 1,
-            Self::Mannager => 2,
-            Self::Operator => 3,
-            Self::Viewer => 4
-        }
-
-    }
-
     pub fn code_to_string(user_role: u8) -> String {
 
         match user_role {

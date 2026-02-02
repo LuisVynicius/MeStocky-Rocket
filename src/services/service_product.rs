@@ -90,13 +90,10 @@ pub async fn update_product(
         return Err(());
     }
 
-    match find_product_by_name(database, product_update_dto.get_name()).await {
-        Some(old_product) => {
-            if &old_product.id != product_update_dto.get_id() {
-                return Err(())
-            }
-        },
-        None => {}
+    if let Some(old_product) = find_by_name(database, product_update_dto.get_name()).await {
+        if &old_product.id != product_update_dto.get_id() {
+            return Err(())
+        }
     }
 
     let product = create_update_active_model(product_update_dto);
@@ -157,17 +154,17 @@ pub async fn find_product_by_id(
 
 }
 
-async fn find_product_by_name(
+async fn find_by_name(
     database: &DatabaseConnection,
     name: &str
 ) -> Option<Model> {
 
-    let product = tb_product::Entity::find()
+    let model = tb_product::Entity::find()
         .filter(tb_product::Column::Name.eq(name))
         .one(database)
         .await;
 
-    product.unwrap_or(None)
+    model.unwrap_or(None)
 
 }
 

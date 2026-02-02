@@ -1,6 +1,6 @@
-use sea_orm::{ActiveValue, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, Statement};
+use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, QueryFilter, Statement};
 
-use crate::entities::{dtos::{category_dtos::{CategoryCreateDTO, CategoryDTO, CategoryViewDTO}, generic_dtos::ExistsDTO}, tb_category::{self, ActiveModel}};
+use crate::{entities::{dtos::{category_dtos::{CategoryCreateDTO, CategoryDTO, CategoryViewDTO}, generic_dtos::ExistsDTO}, tb_category::{self, ActiveModel, Model}}};
 
 pub async fn get_all_categories(
     database: &DatabaseConnection
@@ -74,8 +74,10 @@ pub async fn update_category(
         return Err(());
     }
 
-    if exists_by_name(database, category_update_dto.get_name()).await {
-        return Err(());
+    if let Some(old_category) = find_by_name(database, category_update_dto.get_name()).await {
+        if &old_category.id != category_update_dto.get_id() {
+            return Err(())
+        }
     }
 
     let category = create_update_active_model(category_update_dto);
@@ -108,6 +110,20 @@ pub async fn delete_category_by_id(
         },
         Err(_) => Err(())
     }
+
+}
+
+async fn find_by_name(
+    database: &DatabaseConnection,
+    name: &str
+) -> Option<Model> {
+
+    let model = tb_category::Entity::find()
+        .filter(tb_category::Column::Name.eq(name))
+        .one(database)
+        .await;
+
+    model.unwrap_or(None)
 
 }
 
