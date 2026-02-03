@@ -93,7 +93,7 @@ pub async fn update_category(
 
 }
 
-pub async fn delete_category_by_id(
+pub async fn delete_by_id(
     database: &DatabaseConnection,
     id: u64
 ) -> Result<&'static str, ()> {

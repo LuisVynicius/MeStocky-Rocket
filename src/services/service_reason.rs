@@ -69,6 +69,26 @@ pub async fn update_reason(
 
 }
 
+pub async fn delete_by_id(
+    database: &DatabaseConnection,
+    id: u64
+) -> Result<&'static str, ()> {
+
+    if !exists_by_id(database, &id).await {
+        return Err(());
+    }
+
+    let result = tb_reason::Entity::delete_by_id(id).exec(database).await;
+
+    match result {
+        Ok(_) => {
+            Ok("Motivo deletado com sucesso")
+        },
+        Err(_) => Err(())
+    }
+
+}
+
 async fn find_by_name(
     database: &DatabaseConnection,
     name: &str

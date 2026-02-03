@@ -68,7 +68,7 @@ pub async fn route_category_delete(
     category_id: u64
 ) -> Status {
 
-    let result = service_category::delete_category_by_id(database, category_id).await;
+    let result = service_category::delete_by_id(database, category_id).await;
 
     match result {
 

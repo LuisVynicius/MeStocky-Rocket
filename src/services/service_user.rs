@@ -155,10 +155,8 @@ pub async fn switch_role(
     let result = tb_user::Entity::update(user).exec(database).await;
 
     match result {
-
         Ok(_) => Ok("Cargo do usuário atualizado com sucesso"),
         Err(_) => Err(())
-
     }
 
 }
