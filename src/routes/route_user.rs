@@ -1,7 +1,7 @@
 use rocket::{State, http::Status, response::status::{self, Custom}, serde::json::Json};
 use sea_orm::DatabaseConnection;
 
-use crate::{entities::dtos::user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserInformationsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO}, guards::guard_user::Authentication, services::service_user::{self}};
+use crate::{entities::dtos::user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserInformationsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO, ValidedTokenDTO}, guards::guard_user::Authentication, services::service_user::{self}};
 
 #[get("/user")]
 pub async fn route_user_get_all(
@@ -34,13 +34,13 @@ pub async fn route_login(
 pub async fn route_valid_token(
     database: &State<DatabaseConnection>,
     authentication: Authentication
-) -> Status {
+) -> Result<status::Custom<Json<ValidedTokenDTO>>, Status> {
 
     let result = service_user::valid(database, authentication).await;
 
     match result.get_valided() {
-        &false => Status::Forbidden,
-        &true => Status::Ok
+        &false => Err(Status::Forbidden),
+        &true => Ok(Custom(Status::Ok, Json(ValidedTokenDTO::new(true))))
     }
 
 }
