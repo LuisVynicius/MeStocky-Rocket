@@ -1,4 +1,4 @@
-use chrono::Utc;
+use chrono::Local;
 use sea_orm::{ActiveValue, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, Statement};
 
 use crate::{entities::{dtos::{product_dtos::ProductChangeQuantityDTO, report_dtos::ReportViewDTO}, tb_report::{self, ActiveModel}}};
@@ -6,7 +6,7 @@ use crate::{entities::{dtos::{product_dtos::ProductChangeQuantityDTO, report_dto
 pub async fn get_all_reports(
     database: &DatabaseConnection,
 ) -> Vec<ReportViewDTO> {
-
+    
     let stmt = Statement::from_string(
         DbBackend::MySql, 
     r#"
@@ -15,15 +15,15 @@ pub async fn get_all_reports(
                 tb_report.change_type,
                 tb_report.quantity,
                 tb_product.name AS product,
-                tb_return_reason.name AS reason,
+                tb_reason.name AS reason,
 	            CAST(
                     tb_report.date AS CHAR
                 ) AS date
             FROM tb_report
             JOIN tb_product
                 ON tb_product.id = tb_report.product_id 
-            JOIN tb_return_reason
-                ON tb_return_reason.id = tb_report.reason_id;
+            JOIN tb_reason
+                ON tb_reason.id = tb_report.reason_id;
         "#
     );
 
@@ -46,7 +46,7 @@ pub async fn create_report(
             &false => 0
         }),
         quantity: ActiveValue::Set(*product_change_quantity_dto.get_quantity()),
-        date: ActiveValue::Set(Utc::now().naive_local()),
+        date: ActiveValue::Set(Local::now().naive_local()),
         ..Default::default()
     };
 

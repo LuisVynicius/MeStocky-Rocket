@@ -78,3 +78,21 @@ pub async fn route_product_quantity_update(
     }
 
 }
+
+#[delete("/product/<product_id>")]
+pub async fn route_product_delete(
+    database: &State<DatabaseConnection>,
+    _authentication: Authentication,
+    product_id: u64
+) -> Status {
+
+    let result = service_product::delete_by_id(database, product_id).await;
+
+    match result {
+
+        Ok(_) => Status::Ok,
+        Err(_) => Status::Conflict
+
+    }
+
+}

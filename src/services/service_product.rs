@@ -111,6 +111,26 @@ pub async fn update_product(
 
 }
 
+pub async fn delete_by_id(
+    database: &DatabaseConnection,
+    id: u64
+) -> Result<&'static str, ()> {
+
+    if !exists_by_id(database, &id).await {
+        return Err(());
+    }
+
+    let result = tb_product::Entity::delete_by_id(id).exec(database).await;
+
+    match result {
+        Ok(_) => {
+            Ok("Produto deletada com sucesso")
+        },
+        Err(_) => Err(())
+    }
+
+}
+
 pub async fn change_quantity(
     database: &DatabaseConnection,
     product_change_quantity_dto: ProductChangeQuantityDTO
