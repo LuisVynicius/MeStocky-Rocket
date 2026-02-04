@@ -242,7 +242,7 @@ fn create_update_active_model(product_update_dto: ProductUpdateDTO) -> ActiveMod
             true => ActiveValue::NotSet,
             false => ActiveValue::Set(product_update_dto.get_name().clone())
         },
-        category_id: match product_update_dto.get_id() {
+        category_id: match product_update_dto.get_category_id() {
             &0 => ActiveValue::NotSet,
             _ => ActiveValue::Set(*product_update_dto.get_category_id())
         },
