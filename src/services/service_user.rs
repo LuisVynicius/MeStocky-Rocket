@@ -1,6 +1,6 @@
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, QueryFilter, Statement};
 
-use crate::{configs::{config_bcrypt::{encrypt_password, verify_password}, config_jwt::{self, generate_token, get_email_by_token}}, entities::{dtos::{generic_dtos::ExistsDTO, user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserInformationsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO, UserSummaryForAdminQueryDTO, ValidedTokenDTO}}, enums::user_enums::UserRole, tb_user::{self, ActiveModel, Model}}, guards::guard_user::Authentication};
+use crate::{configs::{config_bcrypt::{self, encrypt_password, verify_password}, config_jwt::{self, generate_token, get_email_by_token}}, entities::{dtos::{generic_dtos::ExistsDTO, user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserCredentialsUpdateDTO, UserInformationsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO, UserSummaryForAdminQueryDTO, ValidedTokenDTO}}, enums::user_enums::UserRole, tb_user::{self, ActiveModel, Model}}, guards::guard_user::Authentication};
 
 pub async fn login(
     database: &DatabaseConnection,
@@ -73,8 +73,8 @@ pub async fn create_user(
 
     let user = ActiveModel {
         id: ActiveValue::NotSet,
-        username: ActiveValue::set(user_create_dto.get_username().clone()),
-        email: ActiveValue::Set(user_create_dto.get_email().clone()),
+        username: ActiveValue::set(user_create_dto.get_username().to_string()),
+        email: ActiveValue::Set(user_create_dto.get_email().to_string()),
         password: ActiveValue::Set(
             encrypt_password(user_create_dto.get_password())
         ),
@@ -105,6 +105,39 @@ pub async fn update_user_informations(
     match logged_user {
         Some(model) => {
             let update_user = create_update_active_model(user_update_dto, model);
+
+            match tb_user::Entity::update(update_user).exec(database).await {
+                Ok(_) =>return Ok("Usuário atualizado com sucesso"),
+                _ => return Err(())
+            }
+        },
+        None => return Err(())
+    }
+
+}
+
+pub async fn update_user_credentials(
+    database: &DatabaseConnection,
+    user_update_dto: UserCredentialsUpdateDTO,
+    authentication: Authentication
+) -> Result<&'static str, ()> {
+
+    let email = get_email_by_token(authentication.0);
+
+    let logged_user = find_by_email(database, &email).await;
+
+    match logged_user {
+        Some(model) => {
+            println!("Aqui mano");   
+            if !config_bcrypt::verify_password(user_update_dto.get_old_password(), &model.password) {
+                return Err(());
+            }
+
+            let update_user = ActiveModel {
+                id: ActiveValue::Set(model.id),
+                password: ActiveValue::Set(config_bcrypt::encrypt_password(user_update_dto.get_new_password())),
+                ..Default::default()
+            };
 
             match tb_user::Entity::update(update_user).exec(database).await {
                 Ok(_) =>return Ok("Usuário atualizado com sucesso"),
@@ -227,11 +260,11 @@ fn create_update_active_model(user_update_dto: UserInformationsUpdateDTO, logged
         id: ActiveValue::Set(logged_user.id),
         email: match user_update_dto.get_email().trim().is_empty() {
             true => ActiveValue::NotSet,
-            false => ActiveValue::Set(user_update_dto.get_email().clone())
+            false => ActiveValue::Set(user_update_dto.get_email().to_string())
         },
         username: match user_update_dto.get_username().trim().is_empty() {
             true => ActiveValue::NotSet,
-            false => ActiveValue::Set(user_update_dto.get_username().clone())
+            false => ActiveValue::Set(user_update_dto.get_username().to_string())
         },
         ..Default::default()
      };

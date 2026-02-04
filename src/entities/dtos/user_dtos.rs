@@ -44,15 +44,15 @@ pub struct UserCreateDTO {
 
 impl UserCreateDTO {
 
-    pub fn get_username(&self) -> &String {
+    pub fn get_username(&self) -> &str {
         &self.username
     }
 
-    pub fn get_password(&self) -> &String {
+    pub fn get_password(&self) -> &str {
         &self.password
     }
 
-    pub fn get_email(&self) -> &String {
+    pub fn get_email(&self) -> &str {
         &self.email
     }
 
@@ -81,6 +81,28 @@ impl UserRoleUpdateDTO {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct UserCredentialsUpdateDTO {
+    old_password: String,
+    new_password: String,
+}
+
+impl UserCredentialsUpdateDTO {
+    
+    pub fn get_old_password(&self) -> &str {
+
+        &self.old_password
+
+    }
+
+    pub fn get_new_password(&self) -> &str {
+
+        &self.new_password
+
+    }
+
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct UserInformationsUpdateDTO {
     username: String,
     email: String,
@@ -88,20 +110,12 @@ pub struct UserInformationsUpdateDTO {
 
 impl UserInformationsUpdateDTO {
     
-    pub fn get_username(&self) -> &String {
+    pub fn get_username(&self) -> &str {
         &self.username
     }
 
-    pub fn set_username(&mut self, username: String ) {
-        self.username = username;
-    }
-
-    pub fn get_email(&self) -> &String {
+    pub fn get_email(&self) -> &str {
         &self.email
-    }
-
-    pub fn set_email(&mut self, email: String ) {
-        self.email = email;
     }
 
 }
@@ -114,11 +128,11 @@ pub struct LoginDTO {
 
 impl LoginDTO {
 
-    pub fn get_email(&self) -> &String {
+    pub fn get_email(&self) -> &str {
         &self.email
     }
 
-    pub fn get_password(&self) -> &String {
+    pub fn get_password(&self) -> &str {
         &self.password
     }
     
