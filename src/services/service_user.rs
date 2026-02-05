@@ -1,6 +1,6 @@
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, QueryFilter, Statement};
 
-use crate::{configs::{config_bcrypt::{self, encrypt_password, verify_password}, config_jwt::{self, generate_token, get_email_by_token}}, entities::{dtos::{generic_dtos::ExistsDTO, user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserCredentialsUpdateDTO, UserInformationsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO, UserSummaryForAdminQueryDTO, ValidedTokenDTO}}, enums::user_enums::UserRole, tb_user::{self, ActiveModel, Model}}, guards::guard_user::Authentication};
+use crate::{configs::{config_bcrypt::{self, encrypt_password, verify_password}, config_jwt::{self, generate_token, get_email_by_token}}, entities::{dtos::{generic_dtos::ExistsDTO, user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserCredentialsUpdateDTO, UserInformationsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO, UserSummaryForAdminQueryDTO, ValidedTokenDTO}}, enums::user_enums::UserRole, tb_user::{self, ActiveModel, Model}}, guards::guard_user::AuthenticationGuard};
 
 pub async fn login(
     database: &DatabaseConnection,
@@ -25,11 +25,11 @@ pub async fn login(
 
 pub async fn valid(
     database: &DatabaseConnection,
-    authentication: Authentication
+    authentication: AuthenticationGuard
 ) -> ValidedTokenDTO { 
 
     let token_is_valid = config_jwt::valid_token(&authentication.0);
-    let user_exists = find_by_email(database, &config_jwt::get_email_by_token(authentication.0)).await.is_some();
+    let user_exists = find_by_email(database, &config_jwt::get_email_by_token(&authentication.0)).await.is_some();
 
     ValidedTokenDTO::new(token_is_valid && user_exists)
 
@@ -65,6 +65,12 @@ pub async fn create_user(
     user_create_dto: UserCreateDTO
 ) -> Result<&'static str, ()> {
 
+    if user_create_dto.get_role() == &1 || user_create_dto.get_role() < &1 || user_create_dto.get_role() > &4 {
+
+        return Err(())
+
+    }
+
     if exists_by_email(database, user_create_dto.get_email()).await {
 
         return Err(());
@@ -95,10 +101,10 @@ pub async fn create_user(
 pub async fn update_user_informations(
     database: &DatabaseConnection,
     user_update_dto: UserInformationsUpdateDTO,
-    authentication: Authentication
+    authentication: AuthenticationGuard
 ) -> Result<&'static str, ()> {
 
-    let email = get_email_by_token(authentication.0);
+    let email = get_email_by_token(&authentication.0);
 
     let logged_user = find_by_email(database, &email).await;
 
@@ -119,10 +125,10 @@ pub async fn update_user_informations(
 pub async fn update_user_credentials(
     database: &DatabaseConnection,
     user_update_dto: UserCredentialsUpdateDTO,
-    authentication: Authentication
+    authentication: AuthenticationGuard
 ) -> Result<&'static str, ()> {
 
-    let email = get_email_by_token(authentication.0);
+    let email = get_email_by_token(&authentication.0);
 
     let logged_user = find_by_email(database, &email).await;
 
@@ -154,6 +160,12 @@ pub async fn delete_user_by_id(
     id: u64
 ) -> Result<&'static str, ()> {
 
+    if id == 1 {
+
+        return Err(());
+
+    }
+
     if !exists_by_id(database, id).await {
         return Err(());
     }
@@ -172,7 +184,7 @@ pub async fn delete_user_by_id(
 pub async fn switch_role(
     database: &DatabaseConnection,
     user_role_update_dto: UserRoleUpdateDTO,
-    _authentication: Authentication
+    _authentication: AuthenticationGuard
 ) -> Result<&'static str, ()> {
 
     if !exists_by_id(database, *user_role_update_dto.get_user_id()).await {
@@ -194,7 +206,7 @@ pub async fn switch_role(
 
 }
 
-async fn find_by_email(
+pub async fn find_by_email(
     database: &DatabaseConnection,
     email: &str
 ) -> Option<Model> {

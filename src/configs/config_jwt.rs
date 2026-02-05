@@ -45,7 +45,7 @@ pub fn valid_token(token: &str) -> bool {
     
 }
 
-pub fn get_email_by_token(token: String) -> String {
+pub fn get_email_by_token(token: &str) -> String {
 
     let jwt_secret = get_jwt_secret();
     

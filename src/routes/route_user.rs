@@ -1,12 +1,14 @@
 use rocket::{State, http::Status, response::status::{self, Custom}, serde::json::Json};
 use sea_orm::DatabaseConnection;
 
-use crate::{entities::dtos::user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserCredentialsUpdateDTO, UserInformationsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO, ValidedTokenDTO}, guards::guard_user::Authentication, services::service_user::{self}};
+use crate::{entities::dtos::user_dtos::{AuthenticationDTO, LoginDTO, UserCreateDTO, UserCredentialsUpdateDTO, UserInformationsUpdateDTO, UserRoleUpdateDTO, UserSummaryForAdminDTO, ValidedTokenDTO}, guards::guard_user::{AuthenticationGuard, MannagerAuthenticationGuard}, services::service_user::{self}};
 
 #[get("/user")]
 pub async fn route_user_get_all(
     database: &State<DatabaseConnection>,
-    _authentication: Authentication
+    _authentication: AuthenticationGuard,
+    _mannager_authentication_guard: MannagerAuthenticationGuard
+
 ) -> Json<Vec<UserSummaryForAdminDTO>> {
 
     let users = service_user::get_all_users(database).await;
@@ -33,7 +35,7 @@ pub async fn route_login(
 #[get("/login/valid")]
 pub async fn route_valid_token(
     database: &State<DatabaseConnection>,
-    authentication: Authentication
+    authentication: AuthenticationGuard
 ) -> Result<status::Custom<Json<ValidedTokenDTO>>, Status> {
 
     let result = service_user::valid(database, authentication).await;
@@ -48,7 +50,8 @@ pub async fn route_valid_token(
 #[post("/user", data="<user_create_dto>")]
 pub async fn route_user_create(
     database: &State<DatabaseConnection>,
-    user_create_dto: Json<UserCreateDTO>
+    user_create_dto: Json<UserCreateDTO>,
+    _mannager_authentication_guard: MannagerAuthenticationGuard
 ) -> Status {
 
     let result = service_user::create_user(database, user_create_dto.0).await;
@@ -63,7 +66,7 @@ pub async fn route_user_create(
 #[put("/user/informations", data="<user_update_dto>")]
 pub async fn route_user_update_informations(
     database: &State<DatabaseConnection>,
-    authentication: Authentication,
+    authentication: AuthenticationGuard,
     user_update_dto: Json<UserInformationsUpdateDTO>
 ) -> Status {
 
@@ -79,7 +82,7 @@ pub async fn route_user_update_informations(
 #[put("/user/credentials", data="<user_update_dto>")]
 pub async fn route_user_update_credentials(
     database: &State<DatabaseConnection>,
-    authentication: Authentication,
+    authentication: AuthenticationGuard,
     user_update_dto: Json<UserCredentialsUpdateDTO>
 ) -> Status {
 
@@ -95,7 +98,8 @@ pub async fn route_user_update_credentials(
 #[put("/user/role", data="<user_role_update_dto>")]
 pub async fn route_user_role_update(
     database: &State<DatabaseConnection>,
-    authentication: Authentication,
+    authentication: AuthenticationGuard,
+    _mannager_authentication_guard: MannagerAuthenticationGuard,
     user_role_update_dto: Json<UserRoleUpdateDTO>
 ) -> Result<Custom<&'static str>, Status> {
 
@@ -111,7 +115,8 @@ pub async fn route_user_role_update(
 #[delete("/user/<user_id>")]
 pub async fn route_user_delete(
     database: &State<DatabaseConnection>,
-    _authentication: Authentication,
+    _authentication: AuthenticationGuard,
+    _mannager_authentication_guard: MannagerAuthenticationGuard,
     user_id: u64
 ) -> Status {
 

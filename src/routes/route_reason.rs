@@ -1,12 +1,13 @@
 use rocket::{State, http::Status, serde::json::Json};
 use sea_orm::DatabaseConnection;
 
-use crate::{entities::dtos::reason_dtos::{ReasonCreateDTO, ReasonDTO}, guards::guard_user::Authentication, services::service_reason};
+use crate::{entities::dtos::reason_dtos::{ReasonCreateDTO, ReasonDTO}, guards::guard_user::{AuthenticationGuard, MannagerAuthenticationGuard, OperatorAuthenticationGuard}, services::service_reason};
 
 #[get("/reason")]
 pub async fn route_reason_get_all(
     database: &State<DatabaseConnection>,
-    _authentication: Authentication
+    _authentication_guard: AuthenticationGuard,
+    _operator_authentication_guard: OperatorAuthenticationGuard,
 ) -> Json<Vec<ReasonDTO>> {
 
     let reasons = service_reason::get_all_reason(database).await;
@@ -18,7 +19,8 @@ pub async fn route_reason_get_all(
 #[post("/reason", data="<reason_create_dto>")]
 pub async fn route_reason_create(
     database: &State<DatabaseConnection>,
-    _authentication: Authentication,
+    _authentication_guard: AuthenticationGuard,
+    _mannager_authentication_guard: MannagerAuthenticationGuard,
     reason_create_dto: Json<ReasonCreateDTO>
 ) -> Status {
 
@@ -34,7 +36,8 @@ pub async fn route_reason_create(
 #[put("/reason", data="<reason_update_dto>")]
 pub async fn route_reason_update(
     database: &State<DatabaseConnection>,
-    _authentication: Authentication,
+    _authentication_guard: AuthenticationGuard,
+    _mannager_authentication_guard: MannagerAuthenticationGuard,
     reason_update_dto: Json<ReasonDTO>
 ) -> Status {
 
@@ -52,7 +55,8 @@ pub async fn route_reason_update(
 #[delete("/reason/<reason_id>")]
 pub async fn route_reason_delete(
     database: &State<DatabaseConnection>,
-    _authentication: Authentication,
+    _authentication_guard: AuthenticationGuard,
+    _mannager_authentication_guard: MannagerAuthenticationGuard,
     reason_id: u64
 ) -> Status {
 

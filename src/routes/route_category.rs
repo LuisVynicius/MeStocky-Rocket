@@ -1,12 +1,13 @@
 use rocket::{State, http::Status, serde::json::Json};
 use sea_orm::DatabaseConnection;
 
-use crate::{entities::dtos::category_dtos::{CategoryCreateDTO, CategoryDTO, CategoryViewDTO}, guards::guard_user::Authentication, services::service_category};
+use crate::{entities::dtos::category_dtos::{CategoryCreateDTO, CategoryDTO, CategoryViewDTO}, guards::guard_user::{AuthenticationGuard, MannagerAuthenticationGuard, OperatorAuthenticationGuard}, services::service_category};
 
 #[get("/category")]
 pub async fn route_category_get_all(
     database: &State<DatabaseConnection>,
-    _authentication: Authentication
+    _authentication_guard: AuthenticationGuard,
+    _operator_authentication_guard: OperatorAuthenticationGuard
 ) -> Json<Vec<CategoryDTO>> {
 
     let categories = service_category::get_all_categories(database).await;
@@ -18,7 +19,8 @@ pub async fn route_category_get_all(
 #[get("/category/admin")]
 pub async fn route_category_get_all_admin(
     database: &State<DatabaseConnection>,
-    _authentication: Authentication
+    _authentication_guard: AuthenticationGuard,
+    _mannager_authentication_guard: MannagerAuthenticationGuard
 ) -> Json<Vec<CategoryViewDTO>> {
 
     let categories = service_category::get_all_categories_admin(database).await;
@@ -30,7 +32,8 @@ pub async fn route_category_get_all_admin(
 #[post("/category", data="<category_create_dto>")]
 pub async fn route_category_create(
     database: &State<DatabaseConnection>,
-    _authentication: Authentication,
+    _authentication_guard: AuthenticationGuard,
+    _mannager_authentication_guard: MannagerAuthenticationGuard,
     category_create_dto: Json<CategoryCreateDTO>
 ) -> Status {
 
@@ -46,7 +49,8 @@ pub async fn route_category_create(
 #[put("/category", data="<category_update_dto>")]
 pub async fn route_category_update(
     database: &State<DatabaseConnection>,
-    _authentication: Authentication,
+    _authentication_guard: AuthenticationGuard,
+    _mannager_authentication_guard: MannagerAuthenticationGuard,
     category_update_dto: Json<CategoryDTO>
 ) -> Status {
 
@@ -64,7 +68,8 @@ pub async fn route_category_update(
 #[delete("/category/<category_id>")]
 pub async fn route_category_delete(
     database: &State<DatabaseConnection>,
-    _authentication: Authentication,
+    _authentication_guard: AuthenticationGuard,
+    _mannager_authentication_guard: MannagerAuthenticationGuard,
     category_id: u64
 ) -> Status {
 
