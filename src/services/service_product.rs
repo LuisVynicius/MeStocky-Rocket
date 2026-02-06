@@ -1,10 +1,10 @@
-use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, QueryFilter, Statement};
+use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, DbBackend, DbErr, EntityTrait, FromQueryResult, QueryFilter, Statement};
 
-use crate::{entities::{dtos::{generic_dtos::ExistsDTO, product_dtos::{ProductChangeQuantityDTO, ProductCreateDTO, ProductInformationsGetDTO, ProductInformationsViewDTO, ProductUpdateDTO, ProductViewDTO}}, tb_product::{self, ActiveModel, Model}}, services::service_report};
+use crate::{entities::{dtos::{generic_dtos::ExistsDTO, product_dtos::{ProductChangeQuantityDTO, ProductCreateDTO, ProductInformationsGetDTO, ProductInformationsViewDTO, ProductUpdateDTO, ProductViewDTO}}, tb_product::{self, ActiveModel, Model}}, errors::BackendError, services::service_report};
 
 pub async fn get_all_products(
     database: &DatabaseConnection,
-) -> Vec<ProductViewDTO> {
+) -> Result<Vec<ProductViewDTO>, BackendError> {
 
     let stmt = Statement::from_string(
         DbBackend::MySql, 
@@ -23,13 +23,16 @@ pub async fn get_all_products(
 
     let result = ProductViewDTO::find_by_statement(stmt).all(database).await;
 
-    result.unwrap()
+    match result {
+        Ok(products) => Ok(products),
+        Err(db_err) => Err(BackendError::DatabaseError(db_err))
+    }
 
 }
 
 pub async fn get_products_informations(
     database: &DatabaseConnection,
-) -> ProductInformationsViewDTO {
+) -> Result<ProductInformationsViewDTO, BackendError> {
 
     let stmt = Statement::from_string(
         DbBackend::MySql,
@@ -44,22 +47,32 @@ pub async fn get_products_informations(
 
     let result = ProductInformationsGetDTO::find_by_statement(stmt)
         .one(database)
-        .await
-        .unwrap();
+        .await;
 
-    result.unwrap().into()
+    match result {
+        Ok(informations_opt) => {
+            match informations_opt {
+                Some(informations) => Ok(informations.into()),
+                None => Err(BackendError::ResourceNotFoundError)
+            }
+        },
+        Err(db_err) => Err(BackendError::DatabaseError(db_err))
+    }
     
 }
 
 pub async fn create_product(
     database: &DatabaseConnection,
     product_create_dto: ProductCreateDTO
-) -> Result<&'static str, ()> {
+) -> Result<(), BackendError> {
 
-    if exists_by_name(database, product_create_dto.get_name()).await {
-
-        return Err(());
-
+    match exists_by_name(database, product_create_dto.get_name()).await {
+        Ok(boolean) => {
+            if boolean {
+                return Err(BackendError::ResourceAlreadyInsertedError);
+            }
+        },
+        Err(db_err) => return Err(BackendError::DatabaseError(db_err))
     }
 
     let product = ActiveModel {
@@ -73,10 +86,8 @@ pub async fn create_product(
     let result = tb_product::Entity::insert(product).exec(database).await;
 
     match result {
-
-        Ok(_) => Ok("Produto criado com sucesso"),
-        Err(_) => Err(())
-
+        Ok(_) => Ok(()),
+        Err(db_err) => Err(BackendError::DatabaseError(db_err))
     }
 
 }
@@ -84,16 +95,23 @@ pub async fn create_product(
 pub async fn update_product(
     database: &DatabaseConnection,
     product_update_dto: ProductUpdateDTO
-) -> Result<&'static str, ()> {
+) -> Result<(), BackendError> {
 
-    if !exists_by_id(database, product_update_dto.get_id()).await {
-        return Err(());
+    match exists_by_id(database, product_update_dto.get_id()).await {
+        Ok(boolean) => {
+            if !boolean {
+                return Err(BackendError::ResourceNotFoundError)
+            }
+        },
+        Err(db_err) => return Err(BackendError::DatabaseError(db_err))
     }
 
-    if let Some(old_product) = find_by_name(database, product_update_dto.get_name()).await {
+    if let Ok(old_product) = find_by_name(database, product_update_dto.get_name()).await {
+
         if &old_product.id != product_update_dto.get_id() {
-            return Err(())
+            return Err(BackendError::ResourceConflitUpdateError);
         }
+
     }
 
     let product = create_update_active_model(product_update_dto);
@@ -101,12 +119,8 @@ pub async fn update_product(
     let result = tb_product::Entity::update(product).exec(database).await;
 
     match result {
-
-        Ok(_) => {
-            Ok("Produto atualizado com sucesso")
-        },
-        Err(_) => Err(())
-
+        Ok(_) => Ok(()),
+        Err(db_err) => Err(BackendError::DatabaseError(db_err))
     }
 
 }
@@ -114,19 +128,22 @@ pub async fn update_product(
 pub async fn delete_by_id(
     database: &DatabaseConnection,
     id: u64
-) -> Result<&'static str, ()> {
+) -> Result<(), BackendError> {
 
-    if !exists_by_id(database, &id).await {
-        return Err(());
+    match exists_by_id(database, &id).await {
+        Ok(boolean) => {
+            if !boolean {
+                return Err(BackendError::ResourceNotFoundError)
+            }
+        },
+        Err(db_err) => return Err(BackendError::DatabaseError(db_err))
     }
 
     let result = tb_product::Entity::delete_by_id(id).exec(database).await;
 
     match result {
-        Ok(_) => {
-            Ok("Produto deletada com sucesso")
-        },
-        Err(_) => Err(())
+        Ok(_) => Ok(()),
+        Err(db_err) => Err(BackendError::DatabaseError(db_err))
     }
 
 }
@@ -134,15 +151,21 @@ pub async fn delete_by_id(
 pub async fn change_quantity(
     database: &DatabaseConnection,
     product_change_quantity_dto: ProductChangeQuantityDTO
-) -> Result<&'static str, ()> {
+) -> Result<(), BackendError> {
 
-    if !exists_by_id(database, product_change_quantity_dto.get_id()).await {
-
-        return Err(());
-
+    match exists_by_id(database, product_change_quantity_dto.get_id()).await {
+        Ok(boolean) => {
+            if !boolean {
+                return Err(BackendError::ResourceNotFoundError)
+            }
+        },
+        Err(db_err) => return Err(BackendError::DatabaseError(db_err))
     }
 
-    let product = find_product_by_id(database, *product_change_quantity_dto.get_id()).await.unwrap();
+    let product = match find_product_by_id(database, *product_change_quantity_dto.get_id()).await {
+        Ok(model) => model,
+        Err(backend_error) => return Err(backend_error)
+    };
 
     let updated_product = create_update_change_active_model(&product_change_quantity_dto, product);
 
@@ -151,47 +174,63 @@ pub async fn change_quantity(
             match tb_product::Entity::update(new_product).exec(database).await {
                 Ok(_) => {
                     service_report::create_report(database, product_change_quantity_dto).await.unwrap();
-                    Ok("Quantidade alterada com sucesso")
+                    Ok(())
                 },
-                Err(_) => Err(())
+                Err(db_err) => Err(BackendError::DatabaseError(db_err))
             }
         },
-        Err(_) => Err(())
+        Err(backend_error) => Err(backend_error)
     }
 
 }
 
-pub async fn find_product_by_id(
+async fn find_product_by_id(
     database: &DatabaseConnection,
     id: u64
-) -> Option<Model> {
+) -> Result<Model, BackendError> {
 
-    let product = tb_product::Entity::find_by_id(id)
+    let result = tb_product::Entity::find_by_id(id)
         .one(database)
         .await;
 
-    product.unwrap_or(None)
+    match result {
+        Ok(model_opt) => {
+            match model_opt {
+                Some(model) => Ok(model),
+                None => Err(BackendError::ResourceNotFoundError)
+            }
+        },
+        Err(db_err) => Err(BackendError::DatabaseError(db_err))
+    }
 
 }
 
 async fn find_by_name(
     database: &DatabaseConnection,
     name: &str
-) -> Option<Model> {
+) -> Result<Model, BackendError> {
 
-    let model = tb_product::Entity::find()
+    let result = tb_product::Entity::find()
         .filter(tb_product::Column::Name.eq(name))
         .one(database)
         .await;
 
-    model.unwrap_or(None)
+    match result {
+        Ok(model_opt) => {
+            match model_opt {
+                Some(model) => Ok(model),
+                None => Err(BackendError::ResourceNotFoundError)
+            }
+        },
+        Err(db_err) => Err(BackendError::DatabaseError(db_err))
+    }
 
 }
 
 async fn exists_by_id(
     database: &DatabaseConnection,
     id: &u64
-) -> bool {
+) -> Result<bool, DbErr> {
     
     let stmt = Statement::from_string(
         DbBackend::MySql,
@@ -207,14 +246,22 @@ async fn exists_by_id(
 
     let result = ExistsDTO::find_by_statement(stmt).one(database).await;
     
-    result.unwrap().unwrap().get_into_exist()
+    match result {
+        Ok(exists_opt) => {
+            match exists_opt {
+                Some(exists_dto) => Ok(exists_dto.get_into_exist()),
+                None => Err(DbErr::RecordNotInserted)
+            }
+        },
+        Err(db_err) => Err(db_err)
+    }
 
 }
 
 async fn exists_by_name(
     database: &DatabaseConnection,
     name: &str
-) -> bool {
+) -> Result<bool, DbErr> {
 
     let stmt = Statement::from_string(
         DbBackend::MySql,
@@ -230,7 +277,15 @@ async fn exists_by_name(
 
     let result = ExistsDTO::find_by_statement(stmt).one(database).await;
     
-    result.unwrap().unwrap().get_into_exist()
+    match result {
+        Ok(exists_opt) => {
+            match exists_opt {
+                Some(exists_dto) => Ok(exists_dto.get_into_exist()),
+                None => Err(DbErr::RecordNotInserted)
+            }
+        },
+        Err(db_err) => Err(db_err)
+    }
 
 }
 
@@ -257,7 +312,7 @@ fn create_update_active_model(product_update_dto: ProductUpdateDTO) -> ActiveMod
 
 }
 
-fn create_update_change_active_model(product_change_quantity_dto: &ProductChangeQuantityDTO, product: Model) -> Result<ActiveModel, ()> {
+fn create_update_change_active_model(product_change_quantity_dto: &ProductChangeQuantityDTO, product: Model) -> Result<ActiveModel, BackendError> {
 
     let active_model = ActiveModel {
         id: ActiveValue::Set(product_change_quantity_dto.get_id().clone()),
@@ -265,7 +320,7 @@ fn create_update_change_active_model(product_change_quantity_dto: &ProductChange
             &true => ActiveValue::Set(product.quantity + product_change_quantity_dto.get_quantity()),
             &false => {
                 if product.quantity < *product_change_quantity_dto.get_quantity() {
-                    return Err(());
+                    return Err(BackendError::ResourceConflitUpdateError);
                 }
                 
                 ActiveValue::Set(product.quantity - product_change_quantity_dto.get_quantity())
