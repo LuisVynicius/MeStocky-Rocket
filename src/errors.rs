@@ -5,5 +5,9 @@ pub enum BackendError {
 
     ResourceAlreadyInsertedError,
     ResourceNotFoundError,
-    ResourceConflitUpdateError
+    ResourceConflitUpdateError,
+
+    InvalidCredentialsError,
+
+    InvalidValuesError
 }

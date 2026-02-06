@@ -133,16 +133,16 @@ impl<'r> FromRequest<'r> for ViewerAuthenticationGuard {
 
 async fn verify_role<T: Default>(database: &DatabaseConnection, email: &str, role: u8) -> Outcome<T, &'static str> {
     
-    let model = service_user::find_by_email(database, &email).await;
+    let result = service_user::find_by_email(database, &email).await;
 
-    match model {
-        Some(user) => {
+    match result {
+        Ok(user) => {
             match user.role <= role {
                 true => Outcome::Success(T::default()),
                 false => Outcome::Error((Status::Forbidden, "Erro no banco de dados"))
             }
         },
-        None => Outcome::Error((Status::NotFound, "Usuário não encontrado"))
+        Err(backend_error) => Outcome::Error((Status::InternalServerError, "Erro interno"))
     }
 
 }
