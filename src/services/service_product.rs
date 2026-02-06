@@ -173,8 +173,9 @@ pub async fn change_quantity(
         Ok(new_product) => {
             match tb_product::Entity::update(new_product).exec(database).await {
                 Ok(_) => {
-                    service_report::create_report(database, product_change_quantity_dto).await.unwrap();
-                    Ok(())
+                    let result = service_report::create_report(database, product_change_quantity_dto).await;
+                    
+                    result
                 },
                 Err(db_err) => Err(BackendError::DatabaseError(db_err))
             }

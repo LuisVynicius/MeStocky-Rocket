@@ -1,17 +1,20 @@
-use rocket::{State, serde::json::Json};
+use rocket::{State, response::status::Custom, serde::json::Json};
 use sea_orm::DatabaseConnection;
 
-use crate::{entities::dtos::report_dtos::ReportViewDTO, guards::guard_user::{AuthenticationGuard, ViewerAuthenticationGuard}, services::service_report};
+use crate::{entities::dtos::report_dtos::ReportViewDTO, guards::guard_user::{AuthenticationGuard, ViewerAuthenticationGuard}, routes::generic_functions::catch_backend_error, services::service_report};
 
 #[get("/report")]
 pub async fn route_report_get_all(
     database: &State<DatabaseConnection>,
     _authentication: AuthenticationGuard,
     _viewer_authentication_guard: ViewerAuthenticationGuard
-) -> Json<Vec<ReportViewDTO>> {
+) -> Result<Json<Vec<ReportViewDTO>>, Custom<&'static str>> {
 
-    let reports = service_report::get_all_reports(database).await;
+    let result = service_report::get_all_reports(database).await;
 
-    Json(reports)
+    match result {
+        Ok(reports) => Ok(Json(reports)),
+        Err(backend_error) => Err(catch_backend_error(backend_error))
+    }
 
 }

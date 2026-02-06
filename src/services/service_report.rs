@@ -1,11 +1,11 @@
 use chrono::Local;
 use sea_orm::{ActiveValue, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, Statement};
 
-use crate::{entities::{dtos::{product_dtos::ProductChangeQuantityDTO, report_dtos::ReportViewDTO}, tb_report::{self, ActiveModel}}};
+use crate::{entities::{dtos::{product_dtos::ProductChangeQuantityDTO, report_dtos::ReportViewDTO}, tb_report::{self, ActiveModel}}, errors::BackendError};
 
 pub async fn get_all_reports(
     database: &DatabaseConnection,
-) -> Vec<ReportViewDTO> {
+) -> Result<Vec<ReportViewDTO>, BackendError> {
     
     let stmt = Statement::from_string(
         DbBackend::MySql, 
@@ -29,14 +29,17 @@ pub async fn get_all_reports(
 
     let result = ReportViewDTO::find_by_statement(stmt).all(database).await;
 
-    result.unwrap()
+    match result {
+        Ok(reports) => Ok(reports),
+        Err(db_err) => Err(BackendError::DatabaseError(db_err))
+    }
 
 }
 
 pub async fn create_report(
     database: &DatabaseConnection,
     product_change_quantity_dto: ProductChangeQuantityDTO
-) -> Result<&'static str, ()> {
+) -> Result<(), BackendError> {
 
     let report = ActiveModel {
         product_id: ActiveValue::Set(*product_change_quantity_dto.get_id()),
@@ -53,10 +56,8 @@ pub async fn create_report(
     let result = tb_report::Entity::insert(report).exec(database).await;
 
     match result {
-
-        Ok(_) => Ok("Relatório criado com sucesso"),
-        Err(_) => Err(())
-
+        Ok(_) => Ok(()),
+        Err(db_err) => Err(BackendError::DatabaseError(db_err))
     }
 
 }
