@@ -80,10 +80,8 @@ pub async fn route_category_delete(
     let result = service_category::delete_by_id(database, category_id).await;
 
     match result {
-
         Ok(_) => Ok(Status::Ok),
         Err(backend_error) => Err(catch_backend_error(backend_error))
-
     }
 
 }
