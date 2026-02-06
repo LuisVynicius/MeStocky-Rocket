@@ -1,18 +1,21 @@
-use rocket::{State, http::Status, serde::json::Json};
+use rocket::{State, http::Status, response::status::Custom, serde::json::Json};
 use sea_orm::DatabaseConnection;
 
-use crate::{entities::dtos::reason_dtos::{ReasonCreateDTO, ReasonDTO}, guards::guard_user::{AuthenticationGuard, MannagerAuthenticationGuard, OperatorAuthenticationGuard}, services::service_reason};
+use crate::{entities::dtos::reason_dtos::{ReasonCreateDTO, ReasonDTO}, guards::guard_user::{AuthenticationGuard, MannagerAuthenticationGuard, OperatorAuthenticationGuard}, routes::generic_functions::catch_backend_error, services::service_reason};
 
 #[get("/reason")]
 pub async fn route_reason_get_all(
     database: &State<DatabaseConnection>,
     _authentication_guard: AuthenticationGuard,
     _operator_authentication_guard: OperatorAuthenticationGuard,
-) -> Json<Vec<ReasonDTO>> {
+) -> Result<Json<Vec<ReasonDTO>>, Custom<&'static str>> {
 
-    let reasons = service_reason::get_all_reason(database).await;
+    let result = service_reason::get_all_reason(database).await;
 
-    Json(reasons)
+    match result {
+        Ok(reasons) => Ok(Json(reasons)),
+        Err(backend_error) => Err(catch_backend_error(backend_error))
+    }
 
 }
 
@@ -22,13 +25,13 @@ pub async fn route_reason_create(
     _authentication_guard: AuthenticationGuard,
     _mannager_authentication_guard: MannagerAuthenticationGuard,
     reason_create_dto: Json<ReasonCreateDTO>
-) -> Status {
+) -> Result<Status, Custom<&'static str>> {
 
     let result = service_reason::create_reason(database, reason_create_dto.0).await;
 
     match result {
-        Ok(_) => Status::Created,
-        Err(_) => Status::Conflict
+        Ok(_) => Ok(Status::Created),
+        Err(backend_error) => Err(catch_backend_error(backend_error))
     }
 
 }
@@ -39,15 +42,13 @@ pub async fn route_reason_update(
     _authentication_guard: AuthenticationGuard,
     _mannager_authentication_guard: MannagerAuthenticationGuard,
     reason_update_dto: Json<ReasonDTO>
-) -> Status {
+) -> Result<Status, Custom<&'static str>> {
 
     let result = service_reason::update_reason(database, reason_update_dto.0).await;
 
     match result {
-
-        Ok(_) => Status::Ok,
-        Err(_) => Status::Conflict
-
+        Ok(_) => Ok(Status::Ok),
+        Err(backend_error) => Err(catch_backend_error(backend_error))
     }
 
 }
@@ -58,15 +59,13 @@ pub async fn route_reason_delete(
     _authentication_guard: AuthenticationGuard,
     _mannager_authentication_guard: MannagerAuthenticationGuard,
     reason_id: u64
-) -> Status {
+) -> Result<Status, Custom<&'static str>> {
 
     let result = service_reason::delete_by_id(database, reason_id).await;
 
     match result {
-
-        Ok(_) => Status::Ok,
-        Err(_) => Status::Conflict
-
+        Ok(_) => Ok(Status::Ok),
+        Err(backend_error) => Err(catch_backend_error(backend_error))
     }
 
 }

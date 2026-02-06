@@ -6,10 +6,16 @@ pub async fn get_all_categories(
     database: &DatabaseConnection
 ) -> Result<Vec<CategoryDTO>, BackendError> {
 
-    let categories = tb_category::Entity::find().all(database).await;
+    let result = tb_category::Entity::find().all(database).await;
 
-    match categories {
-        Ok(categories) => Ok(categories.into_iter().map(|category| CategoryDTO::new(category.id, category.name)).collect()),
+    match result {
+        Ok(categories) => Ok(
+            categories.into_iter()
+                .map(
+                    |category| CategoryDTO::new(category.id, category.name)
+                )
+                .collect()
+        ),
         Err(db_err) => Err(BackendError::DatabaseError(db_err))
     }
 
