@@ -1,4 +1,4 @@
-use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, QueryFilter, Statement};
+use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, DbBackend, DbErr, EntityTrait, FromQueryResult, QueryFilter, Statement};
 
 use crate::{entities::{dtos::{category_dtos::{CategoryCreateDTO, CategoryDTO, CategoryViewDTO}, generic_dtos::ExistsDTO}, tb_category::{self, ActiveModel, Model}}, errors::BackendError};
 
@@ -48,10 +48,13 @@ pub async fn create_category(
     category_create_dto: CategoryCreateDTO
 ) -> Result<(), BackendError> {
 
-    if exists_by_name(database, category_create_dto.get_name()).await {
-
-        return Err(BackendError::ResourceAlreadyInsertedError);
-
+    match exists_by_name(database, category_create_dto.get_name()).await {
+        Ok(boolean) => {
+            if boolean {
+                return Err(BackendError::ResourceAlreadyInsertedError);
+            }
+        },
+        Err(db_err) => return Err(BackendError::DatabaseError(db_err))
     }
 
     let category = ActiveModel {
@@ -73,17 +76,21 @@ pub async fn update_category(
     category_update_dto: CategoryDTO
 ) -> Result<(), BackendError> {
 
-    if !exists_by_id(database, category_update_dto.get_id()).await {
-        return Err(BackendError::ResourceNotFoundError);
-    }
-
-    match find_by_name(database, category_update_dto.get_name()).await {
-        Ok(old_category) => {
-            if &old_category.id != category_update_dto.get_id() {
-                return Err(BackendError::ResourceConflitUpdateError);
+    match exists_by_id(database, category_update_dto.get_id()).await {
+        Ok(boolean) => {
+            if !boolean {
+                return Err(BackendError::ResourceNotFoundError)
             }
         },
-        _ => ()
+        Err(db_err) => return Err(BackendError::DatabaseError(db_err))
+    }
+
+    if let Ok(old_category) = find_by_name(database, category_update_dto.get_name()).await {
+
+        if &old_category.id != category_update_dto.get_id() {
+            return Err(BackendError::ResourceConflitUpdateError);
+        }
+
     }
 
     let category = create_update_active_model(category_update_dto);
@@ -92,10 +99,7 @@ pub async fn update_category(
 
     match result {
         Ok(_) => Ok(()),
-        Err(db_err) => {
-            println!("{}", db_err);
-            Err(BackendError::DatabaseError(db_err))
-        }
+        Err(db_err) => Err(BackendError::DatabaseError(db_err))
     }
 
 }
@@ -105,8 +109,13 @@ pub async fn delete_by_id(
     id: u64
 ) -> Result<(), BackendError> {
 
-    if !exists_by_id(database, &id).await {
-        return Err(BackendError::ResourceNotFoundError);
+    match exists_by_id(database, &id).await {
+        Ok(boolean) => {
+            if !boolean {
+                return Err(BackendError::ResourceNotFoundError)
+            }
+        },
+        Err(db_err) => return Err(BackendError::DatabaseError(db_err))
     }
 
     let result = tb_category::Entity::delete_by_id(id).exec(database).await;
@@ -143,7 +152,7 @@ async fn find_by_name(
 async fn exists_by_id(
     database: &DatabaseConnection,
     id: &u64
-) -> bool {
+) -> Result<bool, DbErr> {
     
     let stmt = Statement::from_string(
         DbBackend::MySql,
@@ -159,14 +168,22 @@ async fn exists_by_id(
 
     let result = ExistsDTO::find_by_statement(stmt).one(database).await;
     
-    result.unwrap().unwrap().get_into_exist()
+    match result {
+        Ok(exists_opt) => {
+            match exists_opt {
+                Some(exists_dto) => Ok(exists_dto.get_into_exist()),
+                None => Err(DbErr::RecordNotInserted)
+            }
+        },
+        Err(db_err) => Err(db_err)
+    }
 
 }
 
 async fn exists_by_name(
     database: &DatabaseConnection,
     name: &str
-) -> bool {
+) -> Result<bool, DbErr> {
 
     let stmt = Statement::from_string(
         DbBackend::MySql,
@@ -182,7 +199,15 @@ async fn exists_by_name(
 
     let result = ExistsDTO::find_by_statement(stmt).one(database).await;
     
-    result.unwrap().unwrap().get_into_exist()
+    match result {
+        Ok(exists_opt) => {
+            match exists_opt {
+                Some(exists_dto) => Ok(exists_dto.get_into_exist()),
+                None => Err(DbErr::RecordNotInserted)
+            }
+        },
+        Err(db_err) => Err(db_err)
+    }
 
 }
 
