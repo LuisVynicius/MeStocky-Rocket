@@ -1,23 +1,23 @@
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, QueryFilter, Statement};
 
-use crate::{entities::{dtos::{category_dtos::{CategoryCreateDTO, CategoryDTO, CategoryViewDTO}, generic_dtos::ExistsDTO}, tb_category::{self, ActiveModel, Model}}};
+use crate::{entities::{dtos::{category_dtos::{CategoryCreateDTO, CategoryDTO, CategoryViewDTO}, generic_dtos::ExistsDTO}, tb_category::{self, ActiveModel, Model}}, errors::BackendError};
 
 pub async fn get_all_categories(
     database: &DatabaseConnection
-) -> Vec<CategoryDTO> {
+) -> Result<Vec<CategoryDTO>, BackendError> {
 
     let categories = tb_category::Entity::find().all(database).await;
 
-    categories.unwrap()
-        .into_iter()
-        .map(|model| CategoryDTO::new(model.id, model.name) )
-        .collect()
+    match categories {
+        Ok(categories) => Ok(categories.into_iter().map(|category| CategoryDTO::new(category.id, category.name)).collect()),
+        Err(db_err) => Err(BackendError::DatabaseError(db_err))
+    }
 
 }
 
 pub async fn get_all_categories_admin(
     database: &DatabaseConnection
-) -> Vec<CategoryViewDTO> {
+) -> Result<Vec<CategoryViewDTO>, BackendError> {
 
     let stmt = Statement::from_string(
         DbBackend::MySql,
@@ -34,20 +34,23 @@ pub async fn get_all_categories_admin(
         "#
     );
 
-    let categories = CategoryViewDTO::find_by_statement(stmt).all(database).await;
+    let result = CategoryViewDTO::find_by_statement(stmt).all(database).await;
 
-    categories.unwrap()
+    match result {
+        Ok(categories) => Ok(categories),
+        Err(db_err) => Err(BackendError::DatabaseError(db_err))
+    }
 
 }
 
 pub async fn create_category(
     database: &DatabaseConnection,
     category_create_dto: CategoryCreateDTO
-) -> Result<&'static str, ()> {
+) -> Result<(), BackendError> {
 
     if exists_by_name(database, category_create_dto.get_name()).await {
 
-        return Err(());
+        return Err(BackendError::ResourceAlreadyInsertedError);
 
     }
 
@@ -59,8 +62,8 @@ pub async fn create_category(
     let result = tb_category::Entity::insert(category).exec(database).await;
 
     match result {
-        Ok(_) => Ok("Categoria criada com sucesso"),
-        Err(_) => Err(())
+        Ok(_) => Ok(()),
+        Err(db_err) => Err(BackendError::DatabaseError(db_err))
     }
 
 }
@@ -68,16 +71,19 @@ pub async fn create_category(
 pub async fn update_category(
     database: &DatabaseConnection,
     category_update_dto: CategoryDTO
-) -> Result<&'static str, ()> {
+) -> Result<(), BackendError> {
 
     if !exists_by_id(database, category_update_dto.get_id()).await {
-        return Err(());
+        return Err(BackendError::ResourceNotFoundError);
     }
 
-    if let Some(old_category) = find_by_name(database, category_update_dto.get_name()).await {
-        if &old_category.id != category_update_dto.get_id() {
-            return Err(())
-        }
+    match find_by_name(database, category_update_dto.get_name()).await {
+        Ok(old_category) => {
+            if &old_category.id != category_update_dto.get_id() {
+                return Err(BackendError::ResourceConflitUpdateError);
+            }
+        },
+        _ => ()
     }
 
     let category = create_update_active_model(category_update_dto);
@@ -85,10 +91,11 @@ pub async fn update_category(
     let result = tb_category::Entity::update(category).exec(database).await;
 
     match result {
-        Ok(_) => {
-            Ok("Categoria atualizada com sucesso")
-        },
-        Err(_) => Err(())
+        Ok(_) => Ok(()),
+        Err(db_err) => {
+            println!("{}", db_err);
+            Err(BackendError::DatabaseError(db_err))
+        }
     }
 
 }
@@ -96,19 +103,17 @@ pub async fn update_category(
 pub async fn delete_by_id(
     database: &DatabaseConnection,
     id: u64
-) -> Result<&'static str, ()> {
+) -> Result<(), BackendError> {
 
     if !exists_by_id(database, &id).await {
-        return Err(());
+        return Err(BackendError::ResourceNotFoundError);
     }
 
     let result = tb_category::Entity::delete_by_id(id).exec(database).await;
 
     match result {
-        Ok(_) => {
-            Ok("Categoria deletada com sucesso")
-        },
-        Err(_) => Err(())
+        Ok(_) => Ok(()),
+        Err(db_err) => Err(BackendError::DatabaseError(db_err))
     }
 
 }
@@ -116,14 +121,22 @@ pub async fn delete_by_id(
 async fn find_by_name(
     database: &DatabaseConnection,
     name: &str
-) -> Option<Model> {
+) -> Result<Model, BackendError> {
 
-    let model = tb_category::Entity::find()
+    let result = tb_category::Entity::find()
         .filter(tb_category::Column::Name.eq(name))
         .one(database)
         .await;
 
-    model.unwrap_or(None)
+    match result {
+        Ok(model_opt) => {
+            match model_opt {
+                Some(model) => Ok(model),
+                None => Err(BackendError::ResourceNotFoundError)
+            }
+        },
+        Err(db_err) => Err(BackendError::DatabaseError(db_err))
+    }
 
 }
 
@@ -176,11 +189,11 @@ async fn exists_by_name(
 fn create_update_active_model(category_update_dto: CategoryDTO) -> ActiveModel {
      
      let active_model = ActiveModel {
+        id: ActiveValue::Set(*category_update_dto.get_id()),
         name: match category_update_dto.get_name().trim().is_empty() {
             true => ActiveValue::NotSet,
             false => ActiveValue::Set(category_update_dto.get_name().clone())
         },
-        ..Default::default()
      };
 
      active_model

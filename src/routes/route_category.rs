@@ -1,18 +1,21 @@
-use rocket::{State, http::Status, serde::json::Json};
+use rocket::{State, http::Status, response::status::Custom, serde::json::Json};
 use sea_orm::DatabaseConnection;
 
-use crate::{entities::dtos::category_dtos::{CategoryCreateDTO, CategoryDTO, CategoryViewDTO}, guards::guard_user::{AuthenticationGuard, MannagerAuthenticationGuard, OperatorAuthenticationGuard}, services::service_category};
+use crate::{entities::dtos::category_dtos::{CategoryCreateDTO, CategoryDTO, CategoryViewDTO}, guards::guard_user::{AuthenticationGuard, MannagerAuthenticationGuard, OperatorAuthenticationGuard}, routes::generic_functions::catch_backend_error, services::service_category};
 
 #[get("/category")]
 pub async fn route_category_get_all(
     database: &State<DatabaseConnection>,
     _authentication_guard: AuthenticationGuard,
     _operator_authentication_guard: OperatorAuthenticationGuard
-) -> Json<Vec<CategoryDTO>> {
+) -> Result<Json<Vec<CategoryDTO>>, Custom<&'static str>> {
 
-    let categories = service_category::get_all_categories(database).await;
+    let result = service_category::get_all_categories(database).await;
 
-    Json(categories)
+    match result {
+        Ok(categories) => Ok(Json(categories)),
+        Err(backend_error) => Err(catch_backend_error(backend_error))
+    }
 
 }
 
@@ -21,11 +24,14 @@ pub async fn route_category_get_all_admin(
     database: &State<DatabaseConnection>,
     _authentication_guard: AuthenticationGuard,
     _mannager_authentication_guard: MannagerAuthenticationGuard
-) -> Json<Vec<CategoryViewDTO>> {
+) -> Result<Json<Vec<CategoryViewDTO>>, Custom<&'static str>> {
 
-    let categories = service_category::get_all_categories_admin(database).await;
+    let result = service_category::get_all_categories_admin(database).await;
 
-    Json(categories)
+    match result {
+        Ok(categories) => Ok(Json(categories)),
+        Err(backend_error) => Err(catch_backend_error(backend_error))
+    }
 
 }
 
@@ -35,13 +41,13 @@ pub async fn route_category_create(
     _authentication_guard: AuthenticationGuard,
     _mannager_authentication_guard: MannagerAuthenticationGuard,
     category_create_dto: Json<CategoryCreateDTO>
-) -> Status {
+) -> Result<Status, Custom<&'static str>> {
 
     let result = service_category::create_category(database, category_create_dto.0).await;
 
     match result {
-        Ok(_) => Status::Created,
-        Err(_) => Status::Conflict
+        Ok(_) => Ok(Status::Created),
+        Err(backend_error) => Err(catch_backend_error(backend_error))
     }
 
 }
@@ -52,15 +58,13 @@ pub async fn route_category_update(
     _authentication_guard: AuthenticationGuard,
     _mannager_authentication_guard: MannagerAuthenticationGuard,
     category_update_dto: Json<CategoryDTO>
-) -> Status {
+) -> Result<Status, Custom<&'static str>> {
 
     let result = service_category::update_category(database, category_update_dto.0).await;
 
     match result {
-
-        Ok(_) => Status::Ok,
-        Err(_) => Status::Conflict
-
+        Ok(_) => Ok(Status::Ok),
+        Err(backend_error) => Err(catch_backend_error(backend_error))
     }
 
 }
@@ -71,14 +75,14 @@ pub async fn route_category_delete(
     _authentication_guard: AuthenticationGuard,
     _mannager_authentication_guard: MannagerAuthenticationGuard,
     category_id: u64
-) -> Status {
+) -> Result<Status, Custom<&'static str>> {
 
     let result = service_category::delete_by_id(database, category_id).await;
 
     match result {
 
-        Ok(_) => Status::Ok,
-        Err(_) => Status::Conflict
+        Ok(_) => Ok(Status::Ok),
+        Err(backend_error) => Err(catch_backend_error(backend_error))
 
     }
 
