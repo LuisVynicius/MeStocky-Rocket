@@ -142,7 +142,7 @@ async fn verify_role<T: Default>(database: &DatabaseConnection, email: &str, rol
                 false => Outcome::Error((Status::Forbidden, "Erro no banco de dados"))
             }
         },
-        Err(backend_error) => Outcome::Error((Status::InternalServerError, "Erro interno"))
+        Err(_) => Outcome::Error((Status::InternalServerError, "Erro interno"))
     }
 
 }
