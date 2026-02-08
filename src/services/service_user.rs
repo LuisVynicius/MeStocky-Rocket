@@ -117,6 +117,10 @@ pub async fn create_user(
         email: ActiveValue::Set(user_create_dto.get_email().to_string()),
         password: ActiveValue::Set(encrypt_password(user_create_dto.get_password())),
         role: ActiveValue::Set(*user_create_dto.get_role()),
+        phone: ActiveValue::Set(match user_create_dto.get_phone().trim().is_empty() {
+            true => None,
+            false => Some(user_create_dto.get_phone().to_string()),
+        }),
     };
 
     let result = tb_user::Entity::insert(user).exec(database).await;

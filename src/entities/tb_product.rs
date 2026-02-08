@@ -12,6 +12,7 @@ pub struct Model {
     pub quantity: u64,
     pub min_quantity: u64,
     pub category_id: u64,
+    pub description: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -20,8 +21,8 @@ pub enum Relation {
         belongs_to = "super::tb_category::Entity",
         from = "Column::CategoryId",
         to = "super::tb_category::Column::Id",
-        on_update = "NoAction",
-        on_delete = "NoAction"
+        on_update = "Restrict",
+        on_delete = "Restrict"
     )]
     TbCategory,
     #[sea_orm(has_many = "super::tb_report::Entity")]

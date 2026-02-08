@@ -1,9 +1,4 @@
-pub enum UserRole {
-    Admin,
-    Mannager,
-    Operator,
-    Viewer,
-}
+pub struct UserRole;
 
 impl UserRole {
     pub fn code_to_string(user_role: u8) -> String {

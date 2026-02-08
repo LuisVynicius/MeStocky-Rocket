@@ -20,8 +20,8 @@ pub enum Relation {
         belongs_to = "super::tb_product::Entity",
         from = "Column::ProductId",
         to = "super::tb_product::Column::Id",
-        on_update = "NoAction",
-        on_delete = "NoAction"
+        on_update = "Restrict",
+        on_delete = "Cascade"
     )]
     TbProduct,
     #[sea_orm(

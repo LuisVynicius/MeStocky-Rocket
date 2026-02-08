@@ -36,6 +36,7 @@ pub struct UserCreateDTO {
     password: String,
     email: String,
     role: u8,
+    phone: String,
 }
 
 impl UserCreateDTO {
@@ -53,6 +54,10 @@ impl UserCreateDTO {
 
     pub fn get_role(&self) -> &u8 {
         &self.role
+    }
+
+    pub fn get_phone(&self) -> &str {
+        &self.phone
     }
 }
 
@@ -128,10 +133,6 @@ pub struct ValidedTokenDTO {
 impl ValidedTokenDTO {
     pub fn new(valided: bool) -> Self {
         Self { valided }
-    }
-
-    pub fn get_valided(&self) -> &bool {
-        &self.valided
     }
 }
 
