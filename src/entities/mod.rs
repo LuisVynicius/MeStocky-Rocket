@@ -2,8 +2,8 @@
 
 pub mod tb_category;
 pub mod tb_product;
-pub mod tb_report;
 pub mod tb_reason;
+pub mod tb_report;
 pub mod tb_user;
 
 pub mod dtos;

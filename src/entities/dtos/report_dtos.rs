@@ -8,5 +8,5 @@ pub struct ReportViewDTO {
     quantity: u64,
     product: String,
     reason: String,
-    date: String
+    date: String,
 }

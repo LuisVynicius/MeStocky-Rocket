@@ -5,19 +5,16 @@ pub fn make_cors() -> rocket_cors::Cors {
     CorsOptions {
         allowed_origins: AllowedOrigins::all(),
         allowed_methods: vec![
-                Method::Get,
-                Method::Post,
-                Method::Put,
-                Method::Delete,
-                Method::Options
-            ]
-            .into_iter()
-            .map(From::from)
-            .collect(),
-        allowed_headers: AllowedHeaders::some(&[
-            "token",
-            "Content-Type",
-        ]),
+            Method::Get,
+            Method::Post,
+            Method::Put,
+            Method::Delete,
+            Method::Options,
+        ]
+        .into_iter()
+        .map(From::from)
+        .collect(),
+        allowed_headers: AllowedHeaders::some(&["token", "Content-Type"]),
         allow_credentials: true,
         ..Default::default()
     }

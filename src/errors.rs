@@ -9,5 +9,5 @@ pub enum BackendError {
 
     InvalidCredentialsError,
 
-    InvalidValuesError
+    InvalidValuesError,
 }

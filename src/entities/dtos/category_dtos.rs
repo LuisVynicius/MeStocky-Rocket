@@ -4,16 +4,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
 pub struct CategoryDTO {
     id: u64,
-    name: String
+    name: String,
 }
 
 impl CategoryDTO {
-
     pub fn new(id: u64, name: String) -> Self {
-        Self {
-            id,
-            name
-        }
+        Self { id, name }
     }
 
     pub fn get_id(&self) -> &u64 {
@@ -23,26 +19,22 @@ impl CategoryDTO {
     pub fn get_name(&self) -> &String {
         &self.name
     }
-
 }
-
 
 #[derive(Serialize, Deserialize)]
 pub struct CategoryCreateDTO {
-    name: String
+    name: String,
 }
 
 impl CategoryCreateDTO {
-
     pub fn get_name(&self) -> &String {
         &self.name
     }
-
 }
 
 #[derive(Serialize, Deserialize, FromQueryResult)]
 pub struct CategoryViewDTO {
     id: u64,
     name: String,
-    quantity: Option<u64>
+    quantity: Option<u64>,
 }
