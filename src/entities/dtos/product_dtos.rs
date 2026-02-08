@@ -6,6 +6,7 @@ pub struct ProductCreateDTO {
     name: String,
     min_quantity: u64,
     category_id: u64,
+    description: Option<String>
 }
 
 impl ProductCreateDTO {
@@ -20,6 +21,10 @@ impl ProductCreateDTO {
     pub fn get_category_id(&self) -> &u64 {
         &self.category_id
     }
+
+    pub fn get_description(&self) -> &Option<String> {
+        &self.description
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -28,6 +33,7 @@ pub struct ProductUpdateDTO {
     name: String,
     min_quantity: u64,
     category_id: u64,
+    description: Option<String>
 }
 
 impl ProductUpdateDTO {
@@ -46,6 +52,10 @@ impl ProductUpdateDTO {
     pub fn get_category_id(&self) -> &u64 {
         &self.category_id
     }
+
+    pub fn get_description(&self) -> &Option<String> {
+        &self.description
+    }
 }
 
 #[derive(Serialize, Deserialize, FromQueryResult)]
@@ -55,6 +65,7 @@ pub struct ProductViewDTO {
     quantity: u64,
     min_quantity: u64,
     category: String,
+    description: Option<String>
 }
 
 #[derive(Serialize, Deserialize)]

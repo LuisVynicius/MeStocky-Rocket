@@ -29,7 +29,8 @@ pub async fn get_all_products(
                 tb_product.name,
                 tb_product.quantity,
                 tb_product.min_quantity,
-                tb_category.name as category
+                tb_category.name as category,
+                tb_product.description
             FROM tb_product
             JOIN tb_category
                 ON tb_category.id = tb_product.category_id
@@ -90,6 +91,7 @@ pub async fn create_product(
         min_quantity: ActiveValue::Set(*product_create_dto.get_min_quantity()),
         category_id: ActiveValue::Set(*product_create_dto.get_category_id()),
         quantity: ActiveValue::Set(0),
+        description: ActiveValue::Set(product_create_dto.get_description().clone()),
         ..Default::default()
     };
 
@@ -276,6 +278,17 @@ fn create_update_active_model(product_update_dto: ProductUpdateDTO) -> ActiveMod
             &0 => ActiveValue::NotSet,
             _ => ActiveValue::Set(*product_update_dto.get_min_quantity()),
         },
+        description: ActiveValue::Set(
+            match product_update_dto.get_description() {
+                Some(description) => {
+                    match description.trim().is_empty() {
+                        true => None,
+                        false => Some(description.clone())
+                    }
+                },
+                None => None
+            }
+        ),
         ..Default::default()
     };
 
