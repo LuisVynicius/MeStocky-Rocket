@@ -6,7 +6,7 @@ pub struct ProductCreateDTO {
     name: String,
     min_quantity: u64,
     category_id: u64,
-    description: Option<String>
+    description: Option<String>,
 }
 
 impl ProductCreateDTO {
@@ -33,7 +33,7 @@ pub struct ProductUpdateDTO {
     name: String,
     min_quantity: u64,
     category_id: u64,
-    description: Option<String>
+    description: Option<String>,
 }
 
 impl ProductUpdateDTO {
@@ -65,7 +65,7 @@ pub struct ProductViewDTO {
     quantity: u64,
     min_quantity: u64,
     category: String,
-    description: Option<String>
+    description: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]

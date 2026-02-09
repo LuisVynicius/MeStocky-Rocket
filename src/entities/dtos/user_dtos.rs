@@ -97,7 +97,7 @@ impl UserCredentialsUpdateDTO {
 pub struct UserInformationsUpdateDTO {
     username: String,
     email: String,
-    phone: Option<String>
+    phone: Option<String>,
 }
 
 impl UserInformationsUpdateDTO {

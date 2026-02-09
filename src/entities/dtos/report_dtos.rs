@@ -10,3 +10,13 @@ pub struct ReportViewDTO {
     reason: String,
     date: String,
 }
+
+impl ReportViewDTO {
+    pub fn get_date(&self) -> &String {
+        &self.date
+    }
+
+    pub fn set_date(&mut self, date: String) {
+        self.date = date;
+    }
+}

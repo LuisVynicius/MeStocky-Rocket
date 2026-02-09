@@ -1,4 +1,4 @@
-use chrono::Local;
+use chrono::{Local, NaiveDateTime, TimeZone, Utc};
 use sea_orm::{
     ActiveValue, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, Statement,
 };
@@ -37,7 +37,24 @@ pub async fn get_all_reports(
     let result = ReportViewDTO::find_by_statement(stmt).all(database).await;
 
     match result {
-        Ok(reports) => Ok(reports),
+        Ok(mut reports) => {
+            reports.iter_mut().for_each(|report| {
+                let utc_string = report.get_date().to_string();
+
+                let naive =
+                    NaiveDateTime::parse_from_str(&utc_string, "%Y-%m-%d %H:%M:%S").unwrap();
+
+                let utc = Utc.from_utc_datetime(&naive);
+
+                let local = utc.with_timezone(&Local);
+
+                let naive = local.naive_local();
+
+                report.set_date(naive.to_string());
+            });
+
+            Ok(reports)
+        }
         Err(db_err) => Err(BackendError::DatabaseError(db_err)),
     }
 }
@@ -54,7 +71,7 @@ pub async fn create_report(
             &false => 0,
         }),
         quantity: ActiveValue::Set(*product_change_quantity_dto.get_quantity()),
-        date: ActiveValue::Set(Local::now().naive_local()),
+        date: ActiveValue::Set(Utc::now().naive_local()),
         ..Default::default()
     };
 
