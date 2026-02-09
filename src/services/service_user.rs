@@ -117,10 +117,17 @@ pub async fn create_user(
         email: ActiveValue::Set(user_create_dto.get_email().to_string()),
         password: ActiveValue::Set(encrypt_password(user_create_dto.get_password())),
         role: ActiveValue::Set(*user_create_dto.get_role()),
-        phone: ActiveValue::Set(match user_create_dto.get_phone().trim().is_empty() {
-            true => None,
-            false => Some(user_create_dto.get_phone().to_string()),
-        }),
+        phone: ActiveValue::Set(
+            match user_create_dto.get_phone() {
+                Some(phone) => {
+                    match phone.trim().is_empty() {
+                        true => None,
+                        false => Some(phone.clone())
+                    }
+                },
+                None => None,
+            }
+        ),
     };
 
     let result = tb_user::Entity::insert(user).exec(database).await;
@@ -297,6 +304,15 @@ fn create_update_active_model(
         username: match user_update_dto.get_username().trim().is_empty() {
             true => ActiveValue::NotSet,
             false => ActiveValue::Set(user_update_dto.get_username().to_string()),
+        },
+        phone: match user_update_dto.get_phone() {
+            Some(phone) => {
+                match phone.trim().is_empty() {
+                    true => ActiveValue::NotSet,
+                    false => ActiveValue::Set(Some(phone.clone()))
+                }
+            },
+            None => ActiveValue::NotSet
         },
         ..Default::default()
     };

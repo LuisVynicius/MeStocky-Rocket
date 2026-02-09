@@ -36,7 +36,7 @@ pub struct UserCreateDTO {
     password: String,
     email: String,
     role: u8,
-    phone: String,
+    phone: Option<String>,
 }
 
 impl UserCreateDTO {
@@ -56,7 +56,7 @@ impl UserCreateDTO {
         &self.role
     }
 
-    pub fn get_phone(&self) -> &str {
+    pub fn get_phone(&self) -> &Option<String> {
         &self.phone
     }
 }
@@ -97,6 +97,7 @@ impl UserCredentialsUpdateDTO {
 pub struct UserInformationsUpdateDTO {
     username: String,
     email: String,
+    phone: Option<String>
 }
 
 impl UserInformationsUpdateDTO {
@@ -106,6 +107,10 @@ impl UserInformationsUpdateDTO {
 
     pub fn get_email(&self) -> &str {
         &self.email
+    }
+
+    pub fn get_phone(&self) -> &Option<String> {
+        &self.phone
     }
 }
 

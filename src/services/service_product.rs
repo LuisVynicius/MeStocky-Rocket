@@ -278,17 +278,15 @@ fn create_update_active_model(product_update_dto: ProductUpdateDTO) -> ActiveMod
             &0 => ActiveValue::NotSet,
             _ => ActiveValue::Set(*product_update_dto.get_min_quantity()),
         },
-        description: ActiveValue::Set(
-            match product_update_dto.get_description() {
-                Some(description) => {
-                    match description.trim().is_empty() {
-                        true => None,
-                        false => Some(description.clone())
-                    }
-                },
-                None => None
-            }
-        ),
+        description: match product_update_dto.get_description() {
+            Some(description) => {
+                match description.trim().is_empty() {
+                    true => ActiveValue::NotSet,
+                    false => ActiveValue::Set(Some(description.clone()))
+                }
+            },
+            None => ActiveValue::NotSet
+        },
         ..Default::default()
     };
 
