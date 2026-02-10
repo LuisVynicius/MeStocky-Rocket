@@ -7,6 +7,8 @@ pub enum BackendError {
     ResourceNotFoundError,
     ResourceConflitUpdateError,
 
+    NotEnoughtResourcers,
+
     InvalidCredentialsError,
 
     InvalidValuesError,

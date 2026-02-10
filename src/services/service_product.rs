@@ -340,7 +340,7 @@ fn create_update_change_active_model(
             }
             &false => {
                 if product.quantity < *product_change_quantity_dto.get_quantity() {
-                    return Err(BackendError::ResourceConflitUpdateError);
+                    return Err(BackendError::NotEnoughtResourcers);
                 }
 
                 ActiveValue::Set(product.quantity - product_change_quantity_dto.get_quantity())

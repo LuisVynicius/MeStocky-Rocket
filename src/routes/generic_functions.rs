@@ -25,6 +25,8 @@ pub fn catch_backend_error(backend_error: BackendError) -> Custom<&'static str> 
             "A entidade possuí identificadores presentes em outras entidades já salvas",
         ),
 
+        BackendError::NotEnoughtResourcers => Custom(Status::BadRequest, "Quantidade não disponível"),
+
         BackendError::InvalidCredentialsError => {
             Custom(Status::Forbidden, "As credenciais inserídas são inválidas")
         }
