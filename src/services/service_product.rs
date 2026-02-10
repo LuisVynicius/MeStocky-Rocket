@@ -8,8 +8,7 @@ use crate::{
         dtos::{
             generic_dtos::ExistsDTO,
             product_dtos::{
-                ProductChangeQuantityDTO, ProductCreateDTO, ProductInformationsGetDTO,
-                ProductInformationsViewDTO, ProductUpdateDTO, ProductViewDTO,
+                ProductChangeQuantityDTO, ProductCreateDTO, ProductInformationsGetDTO, ProductInformationsViewDTO, ProductSummaryDTO, ProductUpdateDTO, ProductViewDTO
             },
         },
         tb_product::{self, ActiveModel, Model},
@@ -51,13 +50,12 @@ pub async fn get_products_informations(
     let stmt = Statement::from_string(
         DbBackend::MySql,
         r#"
-        SELECT
-            CAST(COUNT(*) AS UNSIGNED) AS quantity,
-            CAST(SUM(quantity) AS UNSIGNED) AS total,
-            CAST(SUM(quantity < min_quantity) AS UNSIGNED) AS warnings
-        FROM tb_product
+            SELECT
+                CAST(COUNT(*) AS UNSIGNED) AS quantity,
+                CAST(SUM(quantity) AS UNSIGNED) AS total,
+                CAST(SUM(quantity < min_quantity) AS UNSIGNED) AS warnings
+            FROM tb_product
         "#
-        .to_owned(),
     );
 
     let result = ProductInformationsGetDTO::find_by_statement(stmt)
@@ -71,6 +69,45 @@ pub async fn get_products_informations(
         },
         Err(db_err) => Err(BackendError::DatabaseError(db_err)),
     }
+}
+
+pub async fn get_product_by_id(
+    database: &DatabaseConnection,
+    id: u64
+) -> Result<ProductSummaryDTO, BackendError> {
+    let stmt = Statement::from_string(
+        DbBackend::MySql,
+        format!("
+            SELECT
+                tb_product.name,
+                tb_product.quantity,
+                tb_product.min_quantity,
+                tb_category.name AS category,
+                tb_product.description
+            FROM tb_product
+            JOIN tb_category
+                ON tb_category.id = tb_product.category_id
+            WHERE
+                tb_product.id = (\"{id}\")
+        ")
+    );
+
+    let result = ProductSummaryDTO::find_by_statement(stmt)
+        .one(database)
+        .await;
+
+    match result {
+        Ok(product_opt) => {
+            match product_opt {
+                Some(product) => {
+                    Ok(product)
+                },
+                None => Err(BackendError::ResourceNotFoundError)
+            }
+        },
+        Err(db_err) => Err(BackendError::DatabaseError(db_err))
+    }
+
 }
 
 pub async fn create_product(

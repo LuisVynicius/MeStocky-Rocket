@@ -6,8 +6,7 @@ use crate::{
             route_category_get_all_admin, route_category_update,
         },
         route_product::{
-            route_product_create, route_product_delete, route_product_get_all,
-            route_product_informations, route_product_quantity_update, route_product_update,
+            route_product_create, route_product_delete, route_product_get_all, route_product_get_by_id, route_product_informations, route_product_quantity_update, route_product_update
         },
         route_reason::{
             route_reason_create, route_reason_delete, route_reason_get_all, route_reason_update,
@@ -51,6 +50,7 @@ async fn rocket() -> _ {
                 route_category_update,
                 route_category_delete,
                 route_product_get_all,
+                route_product_get_by_id,
                 route_product_informations,
                 route_product_create,
                 route_product_update,

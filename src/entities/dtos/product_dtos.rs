@@ -68,6 +68,15 @@ pub struct ProductViewDTO {
     description: Option<String>,
 }
 
+#[derive(Serialize, Deserialize, FromQueryResult, Debug)]
+pub struct ProductSummaryDTO {
+    name: String,
+    quantity: u64,
+    min_quantity: u64,
+    category: String,
+    description: Option<String>,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct ProductChangeQuantityDTO {
     id: u64,
