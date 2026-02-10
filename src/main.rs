@@ -1,3 +1,5 @@
+use rocket::{Config, config::LogLevel};
+
 use crate::{
     configs::config_cors::make_cors,
     routes::{
@@ -6,7 +8,9 @@ use crate::{
             route_category_get_all_admin, route_category_update,
         },
         route_product::{
-            route_product_create, route_product_delete, route_product_get_all, route_product_get_by_id, route_product_informations, route_product_quantity_update, route_product_update
+            route_product_create, route_product_delete, route_product_get_all,
+            route_product_get_by_id, route_product_informations, route_product_quantity_update,
+            route_product_update,
         },
         route_reason::{
             route_reason_create, route_reason_delete, route_reason_get_all, route_reason_update,
@@ -33,6 +37,10 @@ mod services;
 async fn rocket() -> _ {
     rocket::build()
         .attach(make_cors())
+        .configure(Config {
+            log_level: LogLevel::Off,
+            ..Default::default()
+        })
         .manage(configs::config_database::get_database().await)
         .mount(
             "/",

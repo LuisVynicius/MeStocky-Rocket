@@ -3,7 +3,8 @@ use sea_orm::DatabaseConnection;
 
 use crate::{
     entities::dtos::product_dtos::{
-        ProductChangeQuantityDTO, ProductCreateDTO, ProductInformationsViewDTO, ProductSummaryDTO, ProductUpdateDTO, ProductViewDTO
+        ProductChangeQuantityDTO, ProductCreateDTO, ProductInformationsViewDTO, ProductSummaryDTO,
+        ProductUpdateDTO, ProductViewDTO,
     },
     guards::guard_user::{
         AuthenticationGuard, OperatorAuthenticationGuard, ViewerAuthenticationGuard,
@@ -45,7 +46,7 @@ pub async fn route_product_get_by_id(
     database: &State<DatabaseConnection>,
     _authentication_guard: AuthenticationGuard,
     _viewer_authentication_guard: ViewerAuthenticationGuard,
-    id: u64
+    id: u64,
 ) -> Result<Json<ProductSummaryDTO>, Custom<&'static str>> {
     let result = service_product::get_product_by_id(database, id).await;
 

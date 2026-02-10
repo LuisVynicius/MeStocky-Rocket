@@ -62,22 +62,6 @@ impl UserCreateDTO {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct UserRoleUpdateDTO {
-    user_id: u64,
-    role: u8,
-}
-
-impl UserRoleUpdateDTO {
-    pub fn get_user_id(&self) -> &u64 {
-        &self.user_id
-    }
-
-    pub fn get_role(&self) -> &u8 {
-        &self.role
-    }
-}
-
-#[derive(Serialize, Deserialize)]
 pub struct UserCredentialsUpdateDTO {
     old_password: String,
     new_password: String,
