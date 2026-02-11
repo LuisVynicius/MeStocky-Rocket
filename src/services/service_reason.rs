@@ -114,7 +114,7 @@ async fn find_by_name(database: &DatabaseConnection, name: &str) -> Result<Model
     }
 }
 
-async fn exists_by_id(database: &DatabaseConnection, id: &u64) -> Result<bool, DbErr> {
+pub async fn exists_by_id(database: &DatabaseConnection, id: &u64) -> Result<bool, DbErr> {
     let stmt = Statement::from_string(
         DbBackend::MySql,
         format!(

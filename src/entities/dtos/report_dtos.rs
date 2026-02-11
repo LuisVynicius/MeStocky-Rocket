@@ -20,3 +20,19 @@ impl ReportViewDTO {
         self.date = date;
     }
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct ReportUpdateDTO {
+    id: u64,
+    reason_id: u64
+}
+
+impl ReportUpdateDTO {
+    pub fn get_id(&self) -> &u64 {
+        &self.id
+    }
+
+    pub fn get_reason_id(&self) -> &u64 {
+        &self.reason_id
+    }
+}

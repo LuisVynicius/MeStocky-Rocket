@@ -15,7 +15,7 @@ use crate::{
         route_reason::{
             route_reason_create, route_reason_delete, route_reason_get_all, route_reason_update,
         },
-        route_report::route_report_get_all,
+        route_report::{route_report_get_all, route_report_update},
         route_user::{
             route_login, route_user_create, route_user_delete, route_user_get_all,
             route_user_update_credentials, route_user_update_informations, route_valid_token,
@@ -37,7 +37,7 @@ mod services;
 async fn rocket() -> _ {
     rocket::build()
         .attach(make_cors())
-        .configure(Config {
+         .configure(Config {
             log_level: LogLevel::Off,
             ..Default::default()
         })
@@ -68,7 +68,8 @@ async fn rocket() -> _ {
                 route_reason_create,
                 route_reason_update,
                 route_reason_delete,
-                route_report_get_all
+                route_report_get_all,
+                route_report_update
             ],
         )
 }

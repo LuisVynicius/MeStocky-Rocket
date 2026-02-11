@@ -5,10 +5,10 @@ use sea_orm::{
 
 use crate::{
     entities::{
-        dtos::{product_dtos::ProductChangeQuantityDTO, report_dtos::ReportViewDTO},
+        dtos::{product_dtos::ProductChangeQuantityDTO, report_dtos::{ReportUpdateDTO, ReportViewDTO}},
         tb_report::{self, ActiveModel},
     },
-    errors::BackendError,
+    errors::BackendError, services::service_reason,
 };
 
 pub async fn get_all_reports(
@@ -81,4 +81,42 @@ pub async fn create_report(
         Ok(_) => Ok(()),
         Err(db_err) => Err(BackendError::DatabaseError(db_err)),
     }
+}
+
+pub async fn update_report(
+    database: &DatabaseConnection,
+    report_update_dto: ReportUpdateDTO
+) -> Result<(), BackendError> {
+
+    match service_reason::exists_by_id(database, report_update_dto.get_reason_id()).await {
+        Ok(exists) => {
+            if !exists {
+                return Err(BackendError::ResourceNotFoundError);
+            }
+        },
+        Err(db_err) => return Err(BackendError::DatabaseError(db_err))
+    }
+
+    let report = create_update_active_model(report_update_dto);
+
+    let result = tb_report::Entity::update(report).exec(database).await;
+
+    match result {
+        Ok(_) => Ok(()),
+        Err(db_err) => Err(BackendError::DatabaseError(db_err)),
+    }
+
+}
+
+fn create_update_active_model(report_update_dto: ReportUpdateDTO) -> ActiveModel {
+    let active_model = ActiveModel {
+        id: ActiveValue::Set(*report_update_dto.get_id()),
+        reason_id: match report_update_dto.get_reason_id() {
+            &0 => ActiveValue::NotSet,
+            _ => ActiveValue::Set(*report_update_dto.get_reason_id())
+        },
+        ..Default::default()
+    };
+
+    active_model
 }
